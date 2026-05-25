@@ -15,6 +15,31 @@ npm run server
 http://localhost:4000/
 ```
 
+## 管理员后台
+
+启动本地后台：
+
+```powershell
+cd /d D:\BoKe
+npm run admin
+```
+
+打开：
+
+```text
+http://127.0.0.1:5050/
+```
+
+默认密码：
+
+```text
+admin123
+```
+
+后台可以新建/编辑文章，填写专栏分类，上传 PDF、DOCX、图片、压缩包等文件，并一键发布到 GitHub Pages。
+
+后台只监听 `127.0.0.1`，也就是只允许本机访问。
+
 ## 新建文章
 
 ```powershell
