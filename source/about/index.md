@@ -3,7 +3,7 @@ title: 关于
 date: 2026-05-25 19:58:38
 ---
 
-![头像](/boke/img/avatar.png)
+![头像](/img/avatar.png)
 
 你好，我是 WFCrush，一名机械工程方向的学习者。
 
