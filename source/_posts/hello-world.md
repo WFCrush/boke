@@ -1,6 +1,7 @@
 ---
 title: 博客搭建完成
 date: 2026-05-25 20:00:00
+excerpt: 记录这个 Hexo + Fluid 个人博客的搭建过程和后续维护命令。
 categories:
   - 博客
 tags:
