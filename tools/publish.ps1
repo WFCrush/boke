@@ -18,3 +18,4 @@ git push
 
 Write-Host '发布完成，稍等一会儿访问：'
 Write-Host 'https://wfcrush.github.io/boke/'
+Write-Host '如果刚发布后还没看到，请等待 GitHub Pages 自动部署完成，通常需要 30 到 90 秒。'

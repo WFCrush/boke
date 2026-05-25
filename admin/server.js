@@ -12,6 +12,7 @@ const root = path.resolve(__dirname, '..');
 const postsDir = path.join(root, 'source', '_posts');
 const uploadsDir = path.join(root, 'source', 'uploads');
 const publicDir = path.join(__dirname, 'public');
+const hexoConfig = path.join(root, '_config.yml');
 const port = Number(process.env.ADMIN_PORT || 5050);
 const passwordFile = path.join(root, '.admin-password');
 let password = process.env.ADMIN_PASSWORD || 'admin123';
@@ -56,6 +57,18 @@ function todayString() {
   const now = new Date();
   const pad = (n) => String(n).padStart(2, '0');
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+}
+
+async function getSiteRoot() {
+  try {
+    const config = await fs.readFile(hexoConfig, 'utf8');
+    const match = config.match(/^root:\s*(.+?)\s*$/m);
+    const configured = match ? match[1].replace(/^['"]|['"]$/g, '').trim() : '/';
+    const withLeading = configured.startsWith('/') ? configured : `/${configured}`;
+    return withLeading.endsWith('/') ? withLeading : `${withLeading}/`;
+  } catch (_) {
+    return '/';
+  }
 }
 
 function assertLocal(req, res, next) {
@@ -202,10 +215,12 @@ app.post('/api/upload', auth, upload.single('file'), async (req, res) => {
   const name = `${Date.now()}-${safeName(path.basename(req.file.originalname, ext), 'file')}${ext}`;
   const target = path.join(uploadsDir, name);
   await fs.rename(req.file.path, target);
+  const rootPath = await getSiteRoot();
+  const publicUrl = `${rootPath.replace(/\/$/, '')}/uploads/${encodeURIComponent(name)}`;
   res.json({
     name,
-    url: `/uploads/${name}`,
-    markdown: ext.match(/\.(png|jpe?g|gif|webp)$/) ? `![${name}](/uploads/${name})` : `[${name}](/uploads/${name})`,
+    url: publicUrl,
+    markdown: ext.match(/\.(png|jpe?g|gif|webp)$/) ? `![${name}](${publicUrl})` : `[${name}](${publicUrl})`,
   });
 });
 

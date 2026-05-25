@@ -137,6 +137,7 @@ $('saveBtn').onclick = () => savePost().catch((error) => log(error.message));
 $('insertColumns').onclick = insertColumns;
 $('buildBtn').onclick = () => command('/api/build', '生成').catch((error) => log(error.message));
 $('publishBtn').onclick = () => command('/api/publish', '发布').catch((error) => log(error.message));
+$('openSiteBtn').onclick = () => window.open('https://wfcrush.github.io/boke/', '_blank');
 $('uploadBtn').onclick = () => $('fileInput').click();
 $('fileInput').onchange = () => {
   const [file] = $('fileInput').files;
