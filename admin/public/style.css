@@ -152,6 +152,10 @@ textarea:focus {
   margin-top: 1rem;
 }
 
+.sidebar > button + button {
+  margin-top: 0.5rem;
+}
+
 .post-item {
   text-align: left;
   display: grid;
@@ -250,4 +254,42 @@ textarea:focus {
   .form-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(18, 25, 34, 0.42);
+}
+
+.modal-panel {
+  width: min(520px, 100%);
+  display: grid;
+  gap: 0.85rem;
+  padding: 1.25rem;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid var(--line);
+  box-shadow: 0 22px 60px rgba(25, 39, 52, 0.2);
+}
+
+.modal-panel h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.modal-panel p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }

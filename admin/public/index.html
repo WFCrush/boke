@@ -26,6 +26,8 @@
           <span>本地管理员</span>
         </div>
         <button id="newPost" class="primary">新建文章</button>
+        <button id="contactBtn">联系方式</button>
+        <button id="policyBtn">安全策略</button>
         <div id="postList" class="post-list"></div>
       </aside>
 
@@ -37,8 +39,8 @@
           </div>
           <div class="actions">
             <button id="insertColumns">插入分栏</button>
-            <button id="uploadBtn">上传文件</button>
-            <button id="protectedUploadBtn">密码上传</button>
+            <button id="protectedUploadBtn">安全上传</button>
+            <button id="uploadBtn">公开上传</button>
             <button id="saveBtn" class="primary">保存</button>
             <button id="buildBtn">生成预览</button>
             <button id="publishBtn" class="danger">发布上线</button>
@@ -77,8 +79,34 @@
       </section>
 
       <input id="fileInput" type="file" class="hidden" accept=".pdf,.doc,.docx,.pptx,.xlsx,.zip,.png,.jpg,.jpeg,.gif,.webp">
-      <input id="protectedFileInput" type="file" class="hidden" accept=".pdf,.doc,.docx,.pptx,.xlsx,.zip">
+      <input id="protectedFileInput" type="file" class="hidden" accept=".pdf,.doc,.docx,.pptx,.xlsx,.zip,.png,.jpg,.jpeg,.webp">
     </main>
+
+    <div id="contactModal" class="modal hidden">
+      <form class="modal-panel">
+        <h2>联系方式</h2>
+        <label>QQ<input id="contactQq" placeholder="例如：123456789"></label>
+        <label>微信号<input id="contactWechat" placeholder="例如：mywechat"></label>
+        <label>微信二维码地址<input id="contactWechatQr" placeholder="/boke/uploads/wechat.png"></label>
+        <label>备注<input id="contactNote" placeholder="欢迎联系我"></label>
+        <div class="modal-actions">
+          <button type="button" id="closeContact">取消</button>
+          <button type="submit" class="primary">保存</button>
+        </div>
+      </form>
+    </div>
+
+    <div id="policyModal" class="modal hidden">
+      <div class="modal-panel">
+        <h2>安全策略</h2>
+        <p>公开网页无法做到绝对禁止下载。更安全的做法是：不发布原文件，只发布加密文件；访客输入密码后在浏览器里解密预览或下载。</p>
+        <p>建议敏感资料使用“密码上传”。普通上传的文件是公开链接，任何拿到链接的人都可以访问。</p>
+        <p>PDF/Word 的水印预览会继续增强：优先生成带水印预览图，并隐藏原文件链接。</p>
+        <div class="modal-actions">
+          <button type="button" id="closePolicy" class="primary">知道了</button>
+        </div>
+      </div>
+    </div>
 
     <script src="/app.js"></script>
   </body>

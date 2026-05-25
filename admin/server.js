@@ -7,12 +7,14 @@ const path = require('path');
 const express = require('express');
 const matter = require('gray-matter');
 const multer = require('multer');
+const mammoth = require('mammoth');
 const slugify = require('slugify');
 
 const root = path.resolve(__dirname, '..');
 const postsDir = path.join(root, 'source', '_posts');
 const uploadsDir = path.join(root, 'source', 'uploads');
 const secureDir = path.join(root, 'source', 'secure');
+const contactFile = path.join(root, 'source', 'contact', 'contact.json');
 const publicDir = path.join(__dirname, 'public');
 const hexoConfig = path.join(root, '_config.yml');
 const publishDir = path.join(root, 'public');
@@ -97,6 +99,7 @@ async function ensureDirs() {
   await fs.mkdir(postsDir, { recursive: true });
   await fs.mkdir(uploadsDir, { recursive: true });
   await fs.mkdir(secureDir, { recursive: true });
+  await fs.mkdir(path.dirname(contactFile), { recursive: true });
 }
 
 async function readPost(file) {
@@ -205,6 +208,18 @@ function runWithInput(command, args, input) {
     child.stderr.on('data', (chunk) => { output += chunk.toString('utf8'); });
     child.on('close', (code) => resolve({ ok: code === 0, code, output }));
     child.stdin.end(input);
+  });
+}
+
+function execPlain(command, args) {
+  return new Promise((resolve) => {
+    execFile(command, args, { cwd: root, shell: false }, (error, stdout, stderr) => {
+      resolve({
+        ok: !error,
+        code: error ? error.code : 0,
+        output: [stdout, stderr].filter(Boolean).join('\n').trim(),
+      });
+    });
   });
 }
 
@@ -360,6 +375,32 @@ async function encryptFile(inputPath, outputPath, passwordText) {
   }));
 }
 
+async function makePreview(inputPath, ext, base, originalName) {
+  const previewRoot = path.join(secureDir, 'previews', base);
+  await fs.mkdir(previewRoot, { recursive: true });
+  if (['.pdf', '.png', '.jpg', '.jpeg', '.webp'].includes(ext)) {
+    const result = await execPlain('python', ['tools/make-preview.py', inputPath, previewRoot, `仅供预览 ${new Date().getFullYear()}`, ext]);
+    if (!result.ok) throw new Error(`预览生成失败：${result.output}`);
+    const data = JSON.parse(result.output.trim().split(/\r?\n/).pop());
+    return {
+      type: 'images',
+      title: originalName,
+      pages: data.pages.map((page) => `previews/${encodeURIComponent(base)}/${encodeURIComponent(page)}`),
+    };
+  }
+  if (ext === '.docx') {
+    const converted = await mammoth.convertToHtml({ path: inputPath });
+    const html = `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><style>body{font-family:Microsoft YaHei,Segoe UI,sans-serif;line-height:1.8;max-width:860px;margin:0 auto;padding:24px;color:#1d2733}.wm{position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(-25deg,rgba(0,0,0,.045) 0,rgba(0,0,0,.045) 1px,transparent 1px,transparent 140px);z-index:999}</style></head><body><div class="wm"></div><h1>${originalName}</h1>${converted.value}</body></html>`;
+    await fs.writeFile(path.join(previewRoot, 'preview.html'), html, 'utf8');
+    return {
+      type: 'html',
+      title: originalName,
+      html: `previews/${encodeURIComponent(base)}/preview.html`,
+    };
+  }
+  return null;
+}
+
 app.use(assertLocal);
 
 app.post('/api/login', (req, res) => {
@@ -382,6 +423,27 @@ app.get('/api/posts', auth, async (_req, res) => {
 
 app.get('/api/posts/:file', auth, async (req, res) => {
   res.json(await readPost(req.params.file));
+});
+
+app.get('/api/contact', auth, async (_req, res) => {
+  await ensureDirs();
+  try {
+    res.json(JSON.parse(await fs.readFile(contactFile, 'utf8')));
+  } catch (_) {
+    res.json({ qq: '', wechat: '', wechatQr: '', note: '' });
+  }
+});
+
+app.put('/api/contact', auth, async (req, res) => {
+  await ensureDirs();
+  const contact = {
+    qq: String(req.body.qq || '').trim(),
+    wechat: String(req.body.wechat || '').trim(),
+    wechatQr: String(req.body.wechatQr || '').trim(),
+    note: String(req.body.note || '').trim(),
+  };
+  await fs.writeFile(contactFile, `${JSON.stringify(contact, null, 2)}\n`, 'utf8');
+  res.json(contact);
 });
 
 app.post('/api/posts', auth, async (req, res) => {
@@ -458,21 +520,26 @@ app.post('/api/upload-protected', auth, upload.single('file'), async (req, res) 
     return;
   }
   const ext = path.extname(req.file.originalname).toLowerCase();
-  const allowed = new Set(['.pdf', '.docx', '.doc', '.pptx', '.xlsx', '.zip']);
+  const allowed = new Set(['.pdf', '.docx', '.doc', '.pptx', '.xlsx', '.zip', '.png', '.jpg', '.jpeg', '.webp']);
   if (!allowed.has(ext)) {
     await fs.rm(req.file.path, { force: true });
-    res.status(400).json({ error: '加密文档支持 PDF、Word、PPT、Excel 和 ZIP' });
+    res.status(400).json({ error: '安全上传支持 PDF、Word、PPT、Excel、ZIP 和图片' });
     return;
   }
   const base = `${Date.now()}-${safeName(path.basename(req.file.originalname, ext), 'file')}`;
   const encryptedName = `${base}${ext}.locked`;
   const targetDir = path.join(secureDir, 'files');
   await fs.mkdir(targetDir, { recursive: true });
+  const preview = await makePreview(req.file.path, ext, base, req.file.originalname);
   await encryptFile(req.file.path, path.join(targetDir, encryptedName), filePassword);
   await fs.rm(req.file.path, { force: true });
+  if (preview) {
+    await fs.writeFile(path.join(secureDir, 'previews', base, 'manifest.json'), JSON.stringify(preview, null, 2), 'utf8');
+  }
   const rootPath = await getSiteRoot();
   const filePath = `files/${encodeURIComponent(encryptedName)}`;
-  const openUrl = `${rootPath.replace(/\/$/, '')}/secure/?file=${filePath}&name=${encodeURIComponent(req.file.originalname)}`;
+  const previewPath = preview ? `&preview=previews/${encodeURIComponent(base)}/manifest.json` : '';
+  const openUrl = `${rootPath.replace(/\/$/, '')}/secure/?file=${filePath}&name=${encodeURIComponent(req.file.originalname)}${previewPath}`;
   res.json({
     name: req.file.originalname,
     url: openUrl,

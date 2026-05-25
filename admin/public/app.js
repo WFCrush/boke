@@ -55,6 +55,15 @@ async function loadPosts() {
   });
 }
 
+async function openContact() {
+  const contact = await api('/api/contact');
+  $('contactQq').value = contact.qq || '';
+  $('contactWechat').value = contact.wechat || '';
+  $('contactWechatQr').value = contact.wechatQr || '';
+  $('contactNote').value = contact.note || '';
+  $('contactModal').classList.remove('hidden');
+}
+
 async function openPost(file) {
   const post = await api(`/api/posts/${encodeURIComponent(file)}`);
   fillEditor(post);
@@ -126,7 +135,7 @@ async function uploadProtectedFile(file) {
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || '上传失败');
   insertAtCursor(`\n${data.markdown}\n`);
-  log(`密码文档已上传：${data.url}\n请记住密码，系统不会保存明文密码。`);
+  log(`安全文档已上传：${data.url}\n请记住密码，系统不会保存明文密码。\n提示：公开网页无法绝对禁止截图或录屏，但这个模式不会发布原文件明文。`);
 }
 
 async function command(url, label) {
@@ -176,6 +185,24 @@ $('login').querySelector('form').onsubmit = async (event) => {
 };
 
 $('newPost').onclick = newPost;
+$('contactBtn').onclick = () => openContact().catch((error) => log(error.message));
+$('policyBtn').onclick = () => $('policyModal').classList.remove('hidden');
+$('closeContact').onclick = () => $('contactModal').classList.add('hidden');
+$('closePolicy').onclick = () => $('policyModal').classList.add('hidden');
+$('contactModal').querySelector('form').onsubmit = async (event) => {
+  event.preventDefault();
+  await api('/api/contact', {
+    method: 'PUT',
+    body: JSON.stringify({
+      qq: $('contactQq').value,
+      wechat: $('contactWechat').value,
+      wechatQr: $('contactWechatQr').value,
+      note: $('contactNote').value,
+    }),
+  });
+  $('contactModal').classList.add('hidden');
+  log('联系方式已保存，发布上线后前台会显示。');
+};
 $('saveBtn').onclick = () => savePost().catch((error) => log(error.message));
 $('insertColumns').onclick = insertColumns;
 $('buildBtn').onclick = () => command('/api/build', '生成').catch((error) => log(error.message));

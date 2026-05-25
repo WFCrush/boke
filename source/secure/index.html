@@ -49,6 +49,21 @@
         color: #697789;
         font-size: 13px;
       }
+      .preview {
+        margin-top: 18px;
+        display: grid;
+        gap: 12px;
+      }
+      .preview img,
+      .preview iframe {
+        width: 100%;
+        border: 1px solid #d9e0ea;
+        border-radius: 6px;
+        background: #fff;
+      }
+      .preview iframe {
+        height: 520px;
+      }
     </style>
   </head>
   <body>
@@ -61,12 +76,14 @@
       </label>
       <button id="open">打开并下载</button>
       <pre id="status"></pre>
+      <div id="preview" class="preview"></div>
     </main>
 
     <script>
       const params = new URLSearchParams(location.search);
       const file = params.get('file');
       const displayName = params.get('name') || 'protected-file';
+      const preview = params.get('preview');
       document.getElementById('name').textContent = displayName;
 
       const status = (text) => {
@@ -77,6 +94,24 @@
         const bin = atob(value);
         return Uint8Array.from(bin, (char) => char.charCodeAt(0));
       };
+
+      async function loadPreview() {
+        if (!preview || preview.includes('..')) return;
+        try {
+          const data = await fetch(preview, { cache: 'no-store' }).then((res) => res.ok ? res.json() : null);
+          if (!data) return;
+          const box = document.getElementById('preview');
+          if (data.type === 'images') {
+            box.innerHTML = data.pages.map((page) => '<img src="' + page + '" alt="预览页">').join('');
+          } else if (data.type === 'html') {
+            box.innerHTML = '<iframe src="' + data.html + '" title="文档预览"></iframe>';
+          }
+        } catch (error) {
+          status('预览暂不可用。');
+        }
+      }
+
+      loadPreview();
 
       document.getElementById('open').onclick = async () => {
         try {

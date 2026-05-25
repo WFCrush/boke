@@ -26,3 +26,58 @@ html[data-user-color-scheme="dark"] .boke-columns .boke-card {
     grid-template-columns: 1fr;
   }
 }
+
+.boke-contact-button {
+  position: fixed;
+  right: 18px;
+  bottom: 22px;
+  z-index: 1040;
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 50%;
+  background: #1677ff;
+  color: #fff;
+  box-shadow: 0 12px 28px rgba(22, 119, 255, 0.28);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.boke-contact-panel {
+  position: fixed;
+  right: 18px;
+  bottom: 84px;
+  z-index: 1040;
+  width: min(320px, calc(100vw - 32px));
+  padding: 16px;
+  border: 1px solid rgba(120, 130, 150, 0.28);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 18px 44px rgba(25, 39, 52, 0.16);
+  display: none;
+}
+
+.boke-contact-panel.is-open {
+  display: block;
+}
+
+.boke-contact-panel h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+
+.boke-contact-panel a {
+  display: block;
+  margin: 8px 0;
+}
+
+.boke-contact-panel img {
+  max-width: 160px;
+  display: block;
+  margin-top: 10px;
+  border-radius: 6px;
+}
+
+html[data-user-color-scheme="dark"] .boke-contact-panel {
+  background: #252d38;
+}
