@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>博客管理员后台</title>
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>
+    <div id="login" class="login">
+      <form class="login-panel">
+        <h1>博客管理员后台</h1>
+        <label>
+          管理密码
+          <input id="password" type="password" autocomplete="current-password" placeholder="默认：admin123">
+        </label>
+        <button type="submit">登录</button>
+        <p>后台只在本机运行，用来编辑并发布 GitHub Pages 博客。</p>
+      </form>
+    </div>
+
+    <main id="app" class="app hidden">
+      <aside class="sidebar">
+        <div class="brand">
+          <strong>博客后台</strong>
+          <span>本地管理员</span>
+        </div>
+        <button id="newPost" class="primary">新建文章</button>
+        <div id="postList" class="post-list"></div>
+      </aside>
+
+      <section class="editor">
+        <header class="toolbar">
+          <div>
+            <h1 id="editorTitle">新建文章</h1>
+            <p id="currentFile">未保存</p>
+          </div>
+          <div class="actions">
+            <button id="insertColumns">插入分栏</button>
+            <button id="uploadBtn">上传文件</button>
+            <button id="saveBtn" class="primary">保存</button>
+            <button id="buildBtn">生成预览</button>
+            <button id="publishBtn" class="danger">发布上线</button>
+          </div>
+        </header>
+
+        <div class="form-grid">
+          <label>
+            标题
+            <input id="title" placeholder="文章标题">
+          </label>
+          <label>
+            文件名
+            <input id="slug" placeholder="自动生成，可不填">
+          </label>
+          <label>
+            专栏/分类
+            <input id="categories" placeholder="例如：学习笔记">
+          </label>
+          <label>
+            标签
+            <input id="tags" placeholder="多个用逗号分隔">
+          </label>
+        </div>
+
+        <textarea id="content" spellcheck="false" placeholder="在这里写正文，支持 Markdown。"></textarea>
+
+        <section class="console">
+          <strong>状态</strong>
+          <pre id="log">准备就绪。</pre>
+        </section>
+      </section>
+
+      <input id="fileInput" type="file" class="hidden" accept=".pdf,.doc,.docx,.pptx,.xlsx,.zip,.png,.jpg,.jpeg,.gif,.webp">
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
