@@ -237,6 +237,26 @@ async function checkPublicSite() {
   return res.ok;
 }
 
+async function latestPostExpectation() {
+  try {
+    const files = (await fs.readdir(postsDir)).filter((file) => file.endsWith('.md'));
+    const posts = await Promise.all(files.map(readPost));
+    posts.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    const latest = posts[0];
+    return latest ? latest.title : '';
+  } catch (_) {
+    return '';
+  }
+}
+
+async function publicSiteContains(text) {
+  if (!text) return true;
+  const res = await fetch(`https://wfcrush.github.io/boke/?v=${Date.now()}`, { cache: 'no-store' });
+  if (!res.ok) return false;
+  const html = await res.text();
+  return html.includes(text);
+}
+
 async function waitForDeployment(job) {
   addLog(job, '正在监测 GitHub Pages 自动部署...');
   let lastId = '';
@@ -254,9 +274,10 @@ async function waitForDeployment(job) {
     await wait(5000);
   }
 
-  addLog(job, '正在检测公开博客是否可访问...');
+  const expectedTitle = await latestPostExpectation();
+  addLog(job, expectedTitle ? `正在检测公开博客是否出现文章：${expectedTitle}` : '正在检测公开博客是否可访问...');
   for (let i = 0; i < 18; i += 1) {
-    if (await checkPublicSite()) {
+    if ((await checkPublicSite()) && (await publicSiteContains(expectedTitle))) {
       job.siteOk = true;
       addLog(job, '公开博客已经可以访问：https://wfcrush.github.io/boke/');
       return;
