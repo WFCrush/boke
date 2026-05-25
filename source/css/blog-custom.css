@@ -1,0 +1,28 @@
+.boke-columns {
+  display: grid;
+  grid-template-columns: repeat(var(--columns, 2), minmax(0, 1fr));
+  gap: 1rem;
+  margin: 1.2rem 0;
+}
+
+.boke-columns > div {
+  min-width: 0;
+}
+
+.boke-columns .boke-card {
+  height: 100%;
+  padding: 1rem;
+  border: 1px solid rgba(120, 130, 150, 0.28);
+  border-radius: 8px;
+  background: rgba(248, 250, 252, 0.72);
+}
+
+html[data-user-color-scheme="dark"] .boke-columns .boke-card {
+  background: rgba(37, 45, 56, 0.72);
+}
+
+@media (max-width: 720px) {
+  .boke-columns {
+    grid-template-columns: 1fr;
+  }
+}

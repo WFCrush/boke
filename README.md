@@ -19,7 +19,7 @@ http://localhost:4000/
 
 ```powershell
 cd /d D:\BoKe
-npx hexo-cli new "文章标题"
+npm run new "文章标题"
 ```
 
 文章会生成到：
@@ -29,6 +29,34 @@ D:\BoKe\source\_posts
 ```
 
 也可以直接在 `source\_posts` 里新建 Markdown 文件。
+
+写文章速查：
+
+```text
+D:\BoKe\docs\写文章速查.md
+```
+
+## 发布文章
+
+写完文章后，先本地预览：
+
+```powershell
+cd /d D:\BoKe
+npm run server
+```
+
+确认没问题后，发布到 GitHub Pages：
+
+```powershell
+cd /d D:\BoKe
+npm run publish
+```
+
+发布成功后，稍等一会儿访问：
+
+```text
+https://wfcrush.github.io/boke/
+```
 
 ## 生成静态文件
 
