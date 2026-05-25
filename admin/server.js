@@ -241,7 +241,11 @@ async function latestPostExpectation() {
   try {
     const files = (await fs.readdir(postsDir)).filter((file) => file.endsWith('.md'));
     const posts = await Promise.all(files.map(readPost));
-    posts.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    posts.sort((a, b) => {
+      const aTime = new Date(a.date || 0).getTime() || 0;
+      const bTime = new Date(b.date || 0).getTime() || 0;
+      return bTime - aTime;
+    });
     const latest = posts[0];
     return latest ? latest.title : '';
   } catch (_) {
@@ -257,16 +261,19 @@ async function publicSiteContains(text) {
   return html.includes(text);
 }
 
-async function waitForDeployment(job) {
+async function waitForDeployment(job, expectedSha) {
   addLog(job, '正在监测 GitHub Pages 自动部署...');
   let lastId = '';
-  for (let i = 0; i < 36; i += 1) {
+  for (let i = 0; i < 60; i += 1) {
     const runInfo = await latestPagesRun();
     if (runInfo) {
       lastId = runInfo.id;
       job.actionsUrl = runInfo.html_url;
-      addLog(job, `GitHub Actions: ${runInfo.status}${runInfo.conclusion ? ` / ${runInfo.conclusion}` : ''}`);
-      if (runInfo.status === 'completed') {
+      const shortSha = String(runInfo.head_sha || '').slice(0, 7);
+      addLog(job, `GitHub Actions: ${runInfo.status}${runInfo.conclusion ? ` / ${runInfo.conclusion}` : ''} (${shortSha})`);
+      if (expectedSha && runInfo.head_sha !== expectedSha) {
+        addLog(job, '等待当前提交触发新的部署...');
+      } else if (runInfo.status === 'completed') {
         if (runInfo.conclusion !== 'success') throw new Error(`GitHub Actions 部署失败：${runInfo.html_url}`);
         break;
       }
@@ -320,7 +327,9 @@ async function runPublishJob(job) {
       if (!push.ok) throw new Error('推送到 GitHub 失败，请确认 Clash Verge 已开启，或稍后重试');
     }
 
-    await waitForDeployment(job);
+    const head = await runStreaming(job, 'git', ['rev-parse', 'HEAD']);
+    const expectedSha = head.output.trim().split(/\r?\n/).pop();
+    await waitForDeployment(job, expectedSha);
     job.status = 'success';
     addLog(job, '发布完成，其他人刷新公开博客即可看到。');
   } catch (error) {
