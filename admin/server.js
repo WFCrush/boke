@@ -272,16 +272,31 @@ async function runPublishJob(job) {
     const build = await runStreaming(job, 'npm.cmd', ['run', 'build']);
     if (!build.ok) throw new Error('本地构建失败');
 
+    await runStreaming(job, 'git', ['config', 'http.postBuffer', '524288000']);
+    await runStreaming(job, 'git', ['config', 'http.lowSpeedLimit', '0']);
+    await runStreaming(job, 'git', ['config', 'http.lowSpeedTime', '999999']);
     await runStreaming(job, 'git', ['add', '.']);
     const status = await runStreaming(job, 'git', ['status', '--porcelain']);
+    let shouldPush = false;
     if (!status.output.trim()) {
       addLog(job, '没有新的本地改动需要提交。');
     } else {
       const message = `update blog ${new Date().toLocaleString('zh-CN', { hour12: false })}`;
       const commit = await runStreaming(job, 'git', ['commit', '-m', message]);
       if (!commit.ok) throw new Error('提交失败');
-      const push = await runStreaming(job, 'git', ['push']);
-      if (!push.ok) throw new Error('推送到 GitHub 失败');
+      shouldPush = true;
+    }
+
+    const ahead = await runStreaming(job, 'git', ['status', '--short', '--branch']);
+    if (ahead.output.includes('[ahead ')) shouldPush = true;
+    if (shouldPush) {
+      let push = await runStreaming(job, 'git', ['push']);
+      if (!push.ok) {
+        addLog(job, '推送失败，10 秒后自动重试一次...');
+        await wait(10000);
+        push = await runStreaming(job, 'git', ['push']);
+      }
+      if (!push.ok) throw new Error('推送到 GitHub 失败，请确认 Clash Verge 已开启，或稍后重试');
     }
 
     await waitForDeployment(job);
