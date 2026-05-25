@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>受保护文档</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #f5f7fb;
+        color: #1d2733;
+        font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+      }
+      main {
+        width: min(440px, calc(100% - 32px));
+        background: #fff;
+        border: 1px solid #d9e0ea;
+        border-radius: 8px;
+        padding: 24px;
+        box-shadow: 0 18px 45px rgba(25, 39, 52, 0.08);
+      }
+      h1 { margin: 0 0 8px; font-size: 24px; }
+      p { color: #697789; line-height: 1.7; }
+      label { display: grid; gap: 8px; margin-top: 18px; color: #697789; }
+      input {
+        height: 42px;
+        border: 1px solid #d9e0ea;
+        border-radius: 7px;
+        padding: 0 12px;
+        font: inherit;
+      }
+      button {
+        width: 100%;
+        height: 44px;
+        margin-top: 14px;
+        border: 0;
+        border-radius: 7px;
+        background: #1677ff;
+        color: #fff;
+        font: inherit;
+        cursor: pointer;
+      }
+      pre {
+        white-space: pre-wrap;
+        color: #697789;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>受保护文档</h1>
+      <p id="name">请输入密码打开文件。</p>
+      <label>
+        文件密码
+        <input id="password" type="password" autocomplete="current-password">
+      </label>
+      <button id="open">打开并下载</button>
+      <pre id="status"></pre>
+    </main>
+
+    <script>
+      const params = new URLSearchParams(location.search);
+      const file = params.get('file');
+      const displayName = params.get('name') || 'protected-file';
+      document.getElementById('name').textContent = displayName;
+
+      const status = (text) => {
+        document.getElementById('status').textContent = text;
+      };
+
+      const b64 = (value) => {
+        const bin = atob(value);
+        return Uint8Array.from(bin, (char) => char.charCodeAt(0));
+      };
+
+      document.getElementById('open').onclick = async () => {
+        try {
+          if (!file || file.includes('..')) throw new Error('文件链接不正确。');
+          const password = document.getElementById('password').value;
+          if (!password) throw new Error('请输入密码。');
+          status('正在下载加密文件...');
+          const payload = await fetch(file).then((res) => {
+            if (!res.ok) throw new Error('加密文件不存在或尚未发布。');
+            return res.json();
+          });
+          status('正在解密...');
+          const keyMaterial = await crypto.subtle.importKey(
+            'raw',
+            new TextEncoder().encode(password),
+            'PBKDF2',
+            false,
+            ['deriveKey']
+          );
+          const key = await crypto.subtle.deriveKey(
+            {
+              name: 'PBKDF2',
+              salt: b64(payload.salt),
+              iterations: payload.iterations,
+              hash: 'SHA-256'
+            },
+            keyMaterial,
+            { name: 'AES-GCM', length: 256 },
+            false,
+            ['decrypt']
+          );
+          const encrypted = b64(payload.data);
+          const tag = b64(payload.tag);
+          const merged = new Uint8Array(encrypted.length + tag.length);
+          merged.set(encrypted);
+          merged.set(tag, encrypted.length);
+          const plain = await crypto.subtle.decrypt(
+            { name: 'AES-GCM', iv: b64(payload.iv), tagLength: 128 },
+            key,
+            merged
+          );
+          const blob = new Blob([plain]);
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = displayName;
+          link.click();
+          URL.revokeObjectURL(link.href);
+          status('解密成功，文件已开始下载。');
+        } catch (error) {
+          status(error.message || '打开失败。');
+        }
+      };
+    </script>
+  </body>
+</html>

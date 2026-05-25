@@ -38,6 +38,7 @@
           <div class="actions">
             <button id="insertColumns">插入分栏</button>
             <button id="uploadBtn">上传文件</button>
+            <button id="protectedUploadBtn">密码上传</button>
             <button id="saveBtn" class="primary">保存</button>
             <button id="buildBtn">生成预览</button>
             <button id="publishBtn" class="danger">发布上线</button>
@@ -67,12 +68,16 @@
         <textarea id="content" spellcheck="false" placeholder="在这里写正文，支持 Markdown。"></textarea>
 
         <section class="console">
-          <strong>状态</strong>
+          <div class="console-head">
+            <strong>发布进度</strong>
+            <span id="jobState">空闲</span>
+          </div>
           <pre id="log">准备就绪。</pre>
         </section>
       </section>
 
       <input id="fileInput" type="file" class="hidden" accept=".pdf,.doc,.docx,.pptx,.xlsx,.zip,.png,.jpg,.jpeg,.gif,.webp">
+      <input id="protectedFileInput" type="file" class="hidden" accept=".pdf,.doc,.docx,.pptx,.xlsx,.zip">
     </main>
 
     <script src="/app.js"></script>
