@@ -3,140 +3,286 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>博客管理员后台</title>
+    <title>博客管理后台</title>
     <link rel="stylesheet" href="/style.css">
   </head>
   <body>
+    <!-- 登录页 -->
     <div id="login" class="login">
       <form class="login-panel">
-        <h1>博客管理员后台</h1>
+        <h1>📝 博客管理后台</h1>
+        <p class="login-tip">本地运行，仅你自己能访问</p>
         <label>
-          管理密码
+          <span>管理密码</span>
           <input id="password" type="password" autocomplete="current-password" placeholder="默认：admin123">
         </label>
-        <button type="submit">登录</button>
-        <p>后台只在本机运行，用来编辑并发布 GitHub Pages 博客。</p>
+        <button type="submit" class="primary">登录</button>
       </form>
     </div>
 
+    <!-- 主应用 -->
     <main id="app" class="app hidden">
-      <aside class="sidebar">
-        <div class="brand">
-          <strong>博客后台</strong>
-          <span>本地管理员</span>
+      <!-- 顶栏 -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <strong class="brand-name">📝 博客后台</strong>
+          <span class="brand-sep">|</span>
+          <button class="nav-tab active" data-tab="editor">✍️ 写作</button>
+          <button class="nav-tab" data-tab="posts">📚 文章管理</button>
+          <button class="nav-tab" data-tab="site">🎨 主页设置</button>
+          <button class="nav-tab" data-tab="more">⚙️ 更多</button>
         </div>
-        <button id="newPost" class="primary">新建文章</button>
-        <button id="importMdBtn">导入 Markdown 文件</button>
-        <button id="siteConfigBtn">主页设置</button>
-        <button id="contactBtn">联系方式</button>
-        <button id="policyBtn">安全策略</button>
-        <div id="postList" class="post-list"></div>
-      </aside>
+        <div class="topbar-right">
+          <span id="autosaveStatus" class="autosave">就绪</span>
+          <button id="themeToggle" class="icon-btn" title="切换深浅色">🌙</button>
+          <button id="openSiteBtn" class="icon-btn" title="打开博客">🌐</button>
+          <button id="logoutBtn" class="icon-btn" title="退出登录">🚪</button>
+        </div>
+      </header>
 
-      <section class="editor">
-        <header class="toolbar">
-          <div>
-            <h1 id="editorTitle">新建文章</h1>
-            <p id="currentFile">未保存</p>
-          </div>
-          <div class="actions">
-            <button id="insertColumns">插入分栏</button>
-            <button id="protectedUploadBtn">安全上传</button>
-            <button id="uploadBtn">公开上传</button>
-            <button id="saveBtn" class="primary">保存</button>
-            <button id="buildBtn">生成预览</button>
-            <button id="publishBtn" class="danger">发布上线</button>
-            <button id="openSiteBtn">打开博客</button>
-          </div>
-        </header>
+      <!-- TAB 1：写作 -->
+      <section class="tab-panel active" data-panel="editor">
+        <div class="editor-layout">
+          <!-- 左侧：文章列表 -->
+          <aside class="side-list">
+            <div class="side-head">
+              <button id="newPost" class="primary block-btn">＋ 新建文章</button>
+              <button id="importMdBtn" class="block-btn">📥 导入 .md 文件</button>
+            </div>
+            <div class="search-wrap">
+              <input id="postSearch" placeholder="🔍 搜索文章标题..." />
+            </div>
+            <div id="postList" class="post-list-modern"></div>
+            <div class="hint-box">
+              💡 把 .md 文件拖到本窗口任意位置即可批量导入
+            </div>
+          </aside>
 
-        <div class="form-grid">
-          <label>
-            标题
-            <input id="title" placeholder="文章标题">
-          </label>
-          <label>
-            文件名
-            <input id="slug" placeholder="自动生成，可不填">
-          </label>
-          <label>
-            专栏/分类
-            <input id="categories" placeholder="例如：学习笔记">
-          </label>
-          <label>
-            标签
-            <input id="tags" placeholder="多个用逗号分隔">
-          </label>
-          <label class="checkbox-label">
-            <input id="sticky" type="checkbox">
-            <span>在首页置顶这篇文章</span>
-          </label>
+          <!-- 中间：编辑器 -->
+          <div class="editor-main">
+            <!-- 元信息表单 -->
+            <div class="meta-bar">
+              <input id="title" class="title-input" placeholder="文章标题（必填）">
+              <div class="meta-row">
+                <label class="meta-field">
+                  <span>📁 分类</span>
+                  <input id="categories" list="categoryList" placeholder="选一个">
+                  <datalist id="categoryList"></datalist>
+                </label>
+                <label class="meta-field">
+                  <span>🏷 标签</span>
+                  <input id="tags" placeholder="逗号分隔">
+                </label>
+                <label class="meta-field meta-field-sm">
+                  <span>📅 日期</span>
+                  <input id="postDate" type="datetime-local">
+                </label>
+                <label class="meta-toggle">
+                  <input id="sticky" type="checkbox">
+                  <span>📌 置顶</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Markdown 工具栏 -->
+            <div class="md-toolbar">
+              <button data-md="bold" title="加粗 (Ctrl+B)"><b>B</b></button>
+              <button data-md="italic" title="斜体 (Ctrl+I)"><i>I</i></button>
+              <button data-md="heading">H2</button>
+              <button data-md="quote">❝</button>
+              <button data-md="link" title="链接 (Ctrl+K)">🔗</button>
+              <button data-md="code">&lt;/&gt;</button>
+              <button data-md="codeblock">▢</button>
+              <button data-md="ul">•</button>
+              <button data-md="ol">1.</button>
+              <button data-md="hr">―</button>
+              <button data-md="columns">⫴</button>
+              <span class="toolbar-sep"></span>
+              <button id="uploadBtn" title="上传图片/文件">🖼 上传</button>
+              <button id="protectedUploadBtn" title="加密上传">🔒 加密</button>
+              <span class="toolbar-sep"></span>
+              <button id="previewToggle" class="toggle-btn" title="预览 (Ctrl+P)">👁 预览</button>
+              <span class="toolbar-spacer"></span>
+              <span id="wordCount" class="word-count">0 字</span>
+            </div>
+
+            <!-- 编辑器主区 -->
+            <div class="edit-area">
+              <textarea id="content" spellcheck="false" placeholder="在这里写正文，支持 Markdown。
+
+💡 快捷键：
+  Ctrl+S 保存   Ctrl+B 加粗   Ctrl+I 斜体
+  Ctrl+K 链接   Ctrl+P 预览切换   Ctrl+Enter 发布"></textarea>
+              <div id="preview" class="md-preview hidden"></div>
+            </div>
+
+            <!-- 底部操作栏 -->
+            <div class="action-bar">
+              <div class="action-bar-left">
+                <span id="currentFile" class="current-file">未保存</span>
+              </div>
+              <div class="action-bar-right">
+                <button id="deleteBtn" class="ghost-btn">🗑 删除</button>
+                <button id="saveBtn" class="primary">💾 保存 (Ctrl+S)</button>
+                <button id="publishBtn" class="danger">🚀 发布上线</button>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <textarea id="content" spellcheck="false" placeholder="在这里写正文，支持 Markdown。"></textarea>
-
-        <section class="console">
-          <div class="console-head">
-            <strong>发布进度</strong>
-            <span id="jobState">空闲</span>
+        <!-- 日志抽屉 -->
+        <div id="logDrawer" class="log-drawer collapsed">
+          <div class="log-head">
+            <span><strong id="jobState">就绪</strong></span>
+            <button id="logToggle" class="icon-btn">▲</button>
           </div>
           <pre id="log">准备就绪。</pre>
-        </section>
+        </div>
       </section>
 
+      <!-- TAB 2：文章管理 -->
+      <section class="tab-panel" data-panel="posts">
+        <div class="card">
+          <h2>📚 全部文章</h2>
+          <p class="muted">这里可以批量管理所有文章。点击文章名直接进入编辑。</p>
+          <div class="filter-bar">
+            <input id="postSearchAll" placeholder="🔍 搜索标题..." />
+            <select id="postSortBy">
+              <option value="date-desc">最新优先</option>
+              <option value="date-asc">最早优先</option>
+              <option value="title">按标题</option>
+              <option value="sticky">置顶优先</option>
+            </select>
+          </div>
+          <table class="post-table">
+            <thead>
+              <tr><th>标题</th><th>分类</th><th>日期</th><th>置顶</th><th>操作</th></tr>
+            </thead>
+            <tbody id="postTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TAB 3：主页设置 -->
+      <section class="tab-panel" data-panel="site">
+        <div class="card card-narrow">
+          <h2>🎨 主页设置</h2>
+          <p class="muted">改完点保存，再去"写作"页发布上线才会同步到公开博客。</p>
+
+          <h3 class="section-title">基础信息</h3>
+          <label class="form-row">
+            <span>站点标题（左上角 + 浏览器标签）</span>
+            <input id="cfgTitle" placeholder="例如：晚风的小屋">
+          </label>
+          <label class="form-row">
+            <span>副标题（首页大字下方）</span>
+            <input id="cfgSubtitle" placeholder="例如：记录学习与生活">
+          </label>
+          <label class="form-row">
+            <span>网站描述（用于搜索引擎）</span>
+            <input id="cfgDescription" placeholder="一两句话介绍博客内容">
+          </label>
+          <label class="form-row">
+            <span>作者名（文章署名）</span>
+            <input id="cfgAuthor" placeholder="例如：晚风">
+          </label>
+
+          <h3 class="section-title">首页打字机轮播</h3>
+          <label class="form-row">
+            <span>每行一句，会循环显示在副标题位置</span>
+            <textarea id="cfgSlogans" rows="4" placeholder="第一句&#10;第二句&#10;第三句"></textarea>
+          </label>
+
+          <h3 class="section-title">关于页</h3>
+          <label class="form-row">
+            <span>显示名（"关于我"页面那个大名字）</span>
+            <input id="cfgAboutName" placeholder="例如：晚风">
+          </label>
+          <label class="form-row">
+            <span>个人介绍（一句话）</span>
+            <input id="cfgAboutIntro" placeholder="例如：机械工程在读，记录毕设与生活">
+          </label>
+
+          <div class="form-actions">
+            <button id="reloadSiteCfg" class="ghost-btn">重新读取</button>
+            <button id="saveSiteCfg" class="primary">💾 保存设置</button>
+          </div>
+          <p class="hint">⚠️ 保存只是写入本地配置文件，需要再去"写作"页点"发布上线"才会同步到公开网站。</p>
+        </div>
+      </section>
+
+      <!-- TAB 4：更多 -->
+      <section class="tab-panel" data-panel="more">
+        <div class="cards-grid">
+          <div class="card">
+            <h2>📞 联系方式</h2>
+            <p class="muted">这些信息会显示在"关于我"页面</p>
+            <label class="form-row"><span>QQ</span><input id="contactQq" placeholder="可选"></label>
+            <label class="form-row"><span>微信号</span><input id="contactWechat" placeholder="可选"></label>
+            <label class="form-row"><span>微信二维码图片地址</span><input id="contactWechatQr" placeholder="/boke/uploads/wechat.png"></label>
+            <label class="form-row"><span>备注</span><input id="contactNote" placeholder="例如：欢迎一起交流"></label>
+            <div class="form-actions">
+              <button id="saveContact" class="primary">💾 保存</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>⌨️ 快捷键</h2>
+            <table class="kbd-table">
+              <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>保存当前文章</td></tr>
+              <tr><td><kbd>Ctrl</kbd>+<kbd>B</kbd></td><td>加粗选中文字</td></tr>
+              <tr><td><kbd>Ctrl</kbd>+<kbd>I</kbd></td><td>斜体</td></tr>
+              <tr><td><kbd>Ctrl</kbd>+<kbd>K</kbd></td><td>插入链接</td></tr>
+              <tr><td><kbd>Ctrl</kbd>+<kbd>P</kbd></td><td>切换预览</td></tr>
+              <tr><td><kbd>Ctrl</kbd>+<kbd>Enter</kbd></td><td>发布上线</td></tr>
+              <tr><td>拖拽 .md</td><td>批量导入文章</td></tr>
+              <tr><td>拖拽图片</td><td>插入到光标位置</td></tr>
+            </table>
+          </div>
+
+          <div class="card">
+            <h2>🛡 安全说明</h2>
+            <p class="muted">普通"上传"得到的链接是公开的，任何人拿到都能访问。</p>
+            <p class="muted">"加密上传"会把文件用密码加密后再发布，访客需要密码才能预览/下载。请记好密码，系统不存明文。</p>
+          </div>
+
+          <div class="card">
+            <h2>📊 博客统计</h2>
+            <div id="statsBox" class="stats-box">加载中...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 隐藏的文件 input -->
       <input id="fileInput" type="file" class="hidden" accept=".pdf,.doc,.docx,.pptx,.xlsx,.zip,.png,.jpg,.jpeg,.gif,.webp">
       <input id="protectedFileInput" type="file" class="hidden" accept=".pdf,.doc,.docx,.pptx,.xlsx,.zip,.png,.jpg,.jpeg,.webp">
       <input id="mdImportInput" type="file" class="hidden" accept=".md,.markdown" multiple>
     </main>
 
+    <!-- 拖拽提示 -->
     <div id="dropOverlay" class="drop-overlay hidden">
-      <div class="drop-hint">松开鼠标，把 Markdown 文件导入为文章</div>
+      <div class="drop-hint">
+        <div class="drop-icon">📥</div>
+        <div>松开鼠标，导入 Markdown 文件</div>
+      </div>
     </div>
 
-    <div id="siteConfigModal" class="modal hidden">
-      <form class="modal-panel modal-wide">
-        <h2>主页设置</h2>
-        <label>站点标题（浏览器标签）<input id="cfgTitle" placeholder="例如：ASHUWEI 的笔记"></label>
-        <label>副标题（站名下方一行）<input id="cfgSubtitle" placeholder="例如：记录学习与生活"></label>
-        <label>网站描述（用于搜索引擎）<input id="cfgDescription" placeholder="网站介绍，建议一两句话"></label>
-        <label>作者名<input id="cfgAuthor" placeholder="例如：ASHUWEI"></label>
-        <label>关于页 - 显示名<input id="cfgAboutName" placeholder="关于我里显示的大名字"></label>
-        <label>关于页 - 个人介绍<input id="cfgAboutIntro" placeholder="一句话介绍自己"></label>
-        <label>首页打字机轮播（每行一句）<textarea id="cfgSlogans" rows="4" placeholder="一行一句，会随机循环显示"></textarea></label>
-        <p class="hint">保存后需要"发布上线"才能让公开博客看到变化。</p>
-        <div class="modal-actions">
-          <button type="button" id="closeSiteConfig">取消</button>
-          <button type="submit" class="primary">保存设置</button>
-        </div>
-      </form>
-    </div>
+    <!-- Toast 通知 -->
+    <div id="toastContainer" class="toast-container"></div>
 
-    <div id="contactModal" class="modal hidden">
-      <form class="modal-panel">
-        <h2>联系方式</h2>
-        <label>QQ<input id="contactQq" placeholder="例如：123456789"></label>
-        <label>微信号<input id="contactWechat" placeholder="例如：mywechat"></label>
-        <label>微信二维码地址<input id="contactWechatQr" placeholder="/boke/uploads/wechat.png"></label>
-        <label>备注<input id="contactNote" placeholder="欢迎联系我"></label>
-        <div class="modal-actions">
-          <button type="button" id="closeContact">取消</button>
-          <button type="submit" class="primary">保存</button>
-        </div>
-      </form>
-    </div>
-
-    <div id="policyModal" class="modal hidden">
+    <!-- 确认对话框 -->
+    <div id="confirmModal" class="modal hidden">
       <div class="modal-panel">
-        <h2>安全策略</h2>
-        <p>公开网页无法做到绝对禁止下载。更安全的做法是：不发布原文件，只发布加密文件；访客输入密码后在浏览器里解密预览或下载。</p>
-        <p>建议敏感资料使用“密码上传”。普通上传的文件是公开链接，任何拿到链接的人都可以访问。</p>
-        <p>PDF/Word 的水印预览会继续增强：优先生成带水印预览图，并隐藏原文件链接。</p>
+        <h2 id="confirmTitle">确认</h2>
+        <p id="confirmMessage">确定要执行此操作吗？</p>
         <div class="modal-actions">
-          <button type="button" id="closePolicy" class="primary">知道了</button>
+          <button type="button" id="confirmCancel">取消</button>
+          <button type="button" id="confirmOk" class="danger">确定</button>
         </div>
       </div>
     </div>
 
+    <script src="/marked.min.js"></script>
     <script src="/app.js"></script>
   </body>
 </html>

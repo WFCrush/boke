@@ -544,6 +544,7 @@ app.get('/api/site-config', auth, async (_req, res) => {
       subtitle: matchTop(main, 'subtitle'),
       description: matchTop(main, 'description'),
       author: matchTop(main, 'author'),
+      navbarTitle: readFieldUnderSection(fluid, 'navbar', 'blog_title'),
       aboutName: readFieldUnderSection(fluid, 'about', 'name'),
       aboutIntro: readFieldUnderSection(fluid, 'about', 'intro'),
       slogans: readSloganList(fluid),
@@ -562,10 +563,15 @@ app.put('/api/site-config', auth, async (req, res) => {
     const setIf = (value, fn) => {
       if (typeof value === 'string') fn(value.trim());
     };
-    setIf(body.title, (v) => { main = replaceTopLevelField(main, 'title', v); });
+    setIf(body.title, (v) => {
+      main = replaceTopLevelField(main, 'title', v);
+      // 同步导航栏标题，避免被旧值覆盖（核心 bug 修复点）
+      fluid = replaceFieldUnderSection(fluid, 'navbar', 'blog_title', v);
+    });
     setIf(body.subtitle, (v) => { main = replaceTopLevelField(main, 'subtitle', v); });
     setIf(body.description, (v) => { main = replaceTopLevelField(main, 'description', v); });
     setIf(body.author, (v) => { main = replaceTopLevelField(main, 'author', v); });
+    setIf(body.navbarTitle, (v) => { fluid = replaceFieldUnderSection(fluid, 'navbar', 'blog_title', v); });
     setIf(body.aboutName, (v) => { fluid = replaceFieldUnderSection(fluid, 'about', 'name', v); });
     setIf(body.aboutIntro, (v) => { fluid = replaceFieldUnderSection(fluid, 'about', 'intro', v); });
     if (Array.isArray(body.slogans)) {
@@ -577,6 +583,51 @@ app.put('/api/site-config', auth, async (req, res) => {
     res.json({ ok: true });
   } catch (error) {
     res.status(500).json({ error: `保存站点配置失败：${error.message}` });
+  }
+});
+
+// 标签和分类汇总（用于自动补全）
+app.get('/api/taxonomy', auth, async (_req, res) => {
+  await ensureDirs();
+  try {
+    const files = (await fs.readdir(postsDir)).filter((file) => file.endsWith('.md'));
+    const posts = await Promise.all(files.map(readPost));
+    const categories = new Set();
+    const tags = new Set();
+    posts.forEach((post) => {
+      (post.categories || []).forEach((c) => categories.add(String(c)));
+      (post.tags || []).forEach((t) => tags.add(String(t)));
+    });
+    res.json({ categories: Array.from(categories), tags: Array.from(tags) });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 草稿自动保存（仅本地文件，不会发布）
+app.put('/api/draft', auth, async (req, res) => {
+  await ensureDirs();
+  try {
+    const draftDir = path.join(root, '.admin-tmp');
+    await fs.mkdir(draftDir, { recursive: true });
+    const draftFile = path.join(draftDir, 'autosave.json');
+    await fs.writeFile(draftFile, JSON.stringify({
+      ...req.body,
+      savedAt: new Date().toISOString(),
+    }, null, 2), 'utf8');
+    res.json({ ok: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/draft', auth, async (_req, res) => {
+  try {
+    const draftFile = path.join(root, '.admin-tmp', 'autosave.json');
+    const raw = await fs.readFile(draftFile, 'utf8');
+    res.json(JSON.parse(raw));
+  } catch (_) {
+    res.json(null);
   }
 });
 

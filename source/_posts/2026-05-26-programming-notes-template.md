@@ -1,23 +1,13 @@
 ---
 title: 计算机专业学习笔记应该怎么写
-date: 2026-05-26 09:00:00
-updated: 2026-05-26 12:20:00
-author: ASHUWEI
+date: '2026-05-26 17:00:00'
 categories:
   - 学习方法
 tags:
   - 编程学习
   - 学习笔记
   - 技术写作
-description: 面向计算机专业学生，整理一套简洁实用的技术学习笔记结构，帮助把课程知识、代码实践和踩坑过程沉淀成博客文章。
-excerpt: 技术博客不需要一开始就写得很复杂，先用固定结构记录问题、过程、代码和总结，就能快速形成自己的知识库。
-cover: /img/home-banner.png
-index_img: /img/home-banner.png
-banner_img: /img/home-banner.png
-top: false
-sticky: 8
 ---
-
 ## 背景
 
 刚开始写技术博客时，最容易卡住的不是技术本身，而是不知道一篇文章该怎么组织。对计算机专业学生来说，一篇高质量笔记至少要回答三个问题：
