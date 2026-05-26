@@ -140,15 +140,15 @@ dark_mode:
 color:
   # body 背景色
   # Color of body background
-  body_bg_color: "#eee"
+  body_bg_color: "#f6f8fb"
   # 暗色模式下的 body 背景色，下同
   # Color in dark mode, the same below
-  body_bg_color_dark: "#181c27"
+  body_bg_color_dark: "#1a1a1a"
 
   # 顶部菜单背景色
   # Color of navigation bar background
-  navbar_bg_color: "#2f4154"
-  navbar_bg_color_dark: "#1f3144"
+  navbar_bg_color: "#1f2937"
+  navbar_bg_color_dark: "#151515"
 
   # 顶部菜单字体色
   # Color of navigation bar text
@@ -162,23 +162,23 @@ color:
 
   # 全局字体色
   # Color of global text
-  text_color: "#3c4858"
-  text_color_dark: "#c4c6c9"
+  text_color: "#263241"
+  text_color_dark: "rgba(255,255,255,0.87)"
 
   # 全局次级字体色（摘要、简介等位置）
   # Color of global secondary text (excerpt, introduction, etc.)
-  sec_text_color: "#718096"
-  sec_text_color_dark: "#a7a9ad"
+  sec_text_color: "#667085"
+  sec_text_color_dark: "rgba(255,255,255,0.64)"
 
   # 主面板背景色
   # Color of main board
   board_color: "#fff"
-  board_color_dark: "#252d38"
+  board_color_dark: "#202020"
 
   # 文章正文字体色
   # Color of post text
-  post_text_color: "#2c3e50"
-  post_text_color_dark: "#c4c6c9"
+  post_text_color: "#263241"
+  post_text_color_dark: "rgba(255,255,255,0.87)"
 
   # 文章正文字体色（h1 h2 h3...）
   # Color of Article heading (h1 h2 h3...)
@@ -187,8 +187,8 @@ color:
 
   # 文章超链接字体色
   # Color of post link
-  post_link_color: "#0366d6"
-  post_link_color_dark: "#1589e9"
+  post_link_color: "#1b6ef3"
+  post_link_color_dark: "#8ab4ff"
 
   # 超链接悬浮时字体色
   # Color of link when hovering
@@ -235,6 +235,7 @@ font:
 # Specify the path of your custom js file, support list. The path is relative to the source directory, such as `/js/custom.js` corresponding to the directory `source/js/custom.js`
 custom_js:
   - /js/contact-widget.js
+  - /js/site-enhance.js
 
 # 指定自定义 .css 文件路径，用法和 custom_js 相同
 # The usage is the same as custom_js
