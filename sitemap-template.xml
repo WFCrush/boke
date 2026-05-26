@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>{{ config.url }}/</loc>
+    <lastmod>{{ sNow.toISOString() }}</lastmod>
+  </url>
+  {% for post in posts %}
+  {% if post.path.indexOf('secure/') !== 0 and post.path.indexOf('contact/') !== 0 and post.path.indexOf('opt-images/') !== 0 %}
+  <url>
+    <loc>{{ post.permalink }}</loc>
+    {% if post.updated %}
+    <lastmod>{{ post.updated.toISOString() }}</lastmod>
+    {% endif %}
+  </url>
+  {% endif %}
+  {% endfor %}
+</urlset>
