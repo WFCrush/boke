@@ -112,6 +112,7 @@ async function readPost(file) {
     date: parsed.data.date || '',
     categories: parsed.data.categories || [],
     tags: parsed.data.tags || [],
+    sticky: parsed.data.sticky || 0,
     content: parsed.content.trimStart(),
   };
 }
@@ -132,7 +133,90 @@ function postMarkdown(input) {
     categories: normalizeList(input.categories),
     tags: normalizeList(input.tags),
   };
+  const stickyValue = Number(input.sticky);
+  if (Number.isFinite(stickyValue) && stickyValue > 0) {
+    data.sticky = stickyValue;
+  }
   return matter.stringify(String(input.content || '').trimStart(), data);
+}
+
+function formatYamlValue(value) {
+  const s = String(value == null ? '' : value);
+  if (s === '') return "''";
+  if (/[:#'"&*!|>{}\[\],\n]/.test(s) || /^\s|\s$/.test(s) || /^(true|false|yes|no|null|~)$/i.test(s)) {
+    return `'${s.replace(/'/g, "''")}'`;
+  }
+  return s;
+}
+
+function replaceTopLevelField(text, key, newValue) {
+  const re = new RegExp(`^(${key}:[ \\t]*).*$`, 'm');
+  if (!re.test(text)) return text;
+  return text.replace(re, `$1${formatYamlValue(newValue)}`);
+}
+
+function findSectionRange(text, sectionName) {
+  const startRe = new RegExp(`^${sectionName}:[ \\t]*\\r?\\n`, 'm');
+  const startMatch = startRe.exec(text);
+  if (!startMatch) return null;
+  const startIdx = startMatch.index;
+  const afterHeader = startMatch.index + startMatch[0].length;
+  const rest = text.slice(afterHeader);
+  const nextSectionRe = /^[a-zA-Z_][\w\-]*:/m;
+  const nextMatch = nextSectionRe.exec(rest);
+  const endIdx = nextMatch ? afterHeader + nextMatch.index : text.length;
+  return { startIdx, headerEnd: afterHeader, endIdx };
+}
+
+function replaceFieldUnderSection(text, sectionName, fieldName, newValue) {
+  const range = findSectionRange(text, sectionName);
+  if (!range) return text;
+  const sectionText = text.slice(range.headerEnd, range.endIdx);
+  const fieldRe = new RegExp(`^([ \\t]+${fieldName}:[ \\t]*).*$`, 'm');
+  if (!fieldRe.test(sectionText)) return text;
+  const newSectionText = sectionText.replace(fieldRe, `$1${formatYamlValue(newValue)}`);
+  return text.slice(0, range.headerEnd) + newSectionText + text.slice(range.endIdx);
+}
+
+function readFieldUnderSection(text, sectionName, fieldName) {
+  const range = findSectionRange(text, sectionName);
+  if (!range) return '';
+  const sectionText = text.slice(range.headerEnd, range.endIdx);
+  const fieldRe = new RegExp(`^[ \\t]+${fieldName}:[ \\t]*(.+?)\\s*$`, 'm');
+  const m = sectionText.match(fieldRe);
+  if (!m) return '';
+  return m[1].replace(/^['"]|['"]$/g, '').trim();
+}
+
+function readSloganList(text) {
+  const range = findSectionRange(text, 'index');
+  if (!range) return [];
+  const sectionText = text.slice(range.headerEnd, range.endIdx);
+  const textBlockRe = /^[ \t]+text:[ \t]*\r?\n((?:[ \t]+-[ \t]+.+\r?\n?)+)/m;
+  const m = sectionText.match(textBlockRe);
+  if (!m) return [];
+  return m[1]
+    .split(/\r?\n/)
+    .map((line) => {
+      const itemMatch = line.match(/^[ \t]+-[ \t]+(.+?)\s*$/);
+      if (!itemMatch) return null;
+      return itemMatch[1].replace(/^['"]|['"]$/g, '').trim();
+    })
+    .filter(Boolean);
+}
+
+function replaceSloganList(text, slogans) {
+  const range = findSectionRange(text, 'index');
+  if (!range) return text;
+  const sectionText = text.slice(range.headerEnd, range.endIdx);
+  const textBlockRe = /^([ \t]+text:[ \t]*\r?\n)((?:[ \t]+-[ \t]+.+\r?\n?)+)/m;
+  const m = sectionText.match(textBlockRe);
+  if (!m) return text;
+  const indent = (m[1].match(/^([ \t]+)/) || ['', '  '])[1];
+  const itemIndent = `${indent}  `;
+  const list = (slogans.length ? slogans : ['']).map((s) => `${itemIndent}- ${formatYamlValue(s)}`).join('\n');
+  const newSectionText = sectionText.replace(textBlockRe, `$1${list}\n`);
+  return text.slice(0, range.headerEnd) + newSectionText + text.slice(range.endIdx);
 }
 
 function run(command, args) {
@@ -446,6 +530,56 @@ app.put('/api/contact', auth, async (req, res) => {
   res.json(contact);
 });
 
+app.get('/api/site-config', auth, async (_req, res) => {
+  try {
+    const main = await fs.readFile(hexoConfig, 'utf8');
+    const fluidPath = path.join(root, '_config.fluid.yml');
+    const fluid = await fs.readFile(fluidPath, 'utf8');
+    const matchTop = (text, key) => {
+      const m = text.match(new RegExp(`^${key}:[ \\t]*(.+?)\\s*$`, 'm'));
+      return m ? m[1].replace(/^['"]|['"]$/g, '').trim() : '';
+    };
+    res.json({
+      title: matchTop(main, 'title'),
+      subtitle: matchTop(main, 'subtitle'),
+      description: matchTop(main, 'description'),
+      author: matchTop(main, 'author'),
+      aboutName: readFieldUnderSection(fluid, 'about', 'name'),
+      aboutIntro: readFieldUnderSection(fluid, 'about', 'intro'),
+      slogans: readSloganList(fluid),
+    });
+  } catch (error) {
+    res.status(500).json({ error: `读取站点配置失败：${error.message}` });
+  }
+});
+
+app.put('/api/site-config', auth, async (req, res) => {
+  try {
+    const fluidPath = path.join(root, '_config.fluid.yml');
+    let main = await fs.readFile(hexoConfig, 'utf8');
+    let fluid = await fs.readFile(fluidPath, 'utf8');
+    const body = req.body || {};
+    const setIf = (value, fn) => {
+      if (typeof value === 'string') fn(value.trim());
+    };
+    setIf(body.title, (v) => { main = replaceTopLevelField(main, 'title', v); });
+    setIf(body.subtitle, (v) => { main = replaceTopLevelField(main, 'subtitle', v); });
+    setIf(body.description, (v) => { main = replaceTopLevelField(main, 'description', v); });
+    setIf(body.author, (v) => { main = replaceTopLevelField(main, 'author', v); });
+    setIf(body.aboutName, (v) => { fluid = replaceFieldUnderSection(fluid, 'about', 'name', v); });
+    setIf(body.aboutIntro, (v) => { fluid = replaceFieldUnderSection(fluid, 'about', 'intro', v); });
+    if (Array.isArray(body.slogans)) {
+      const cleaned = body.slogans.map((s) => String(s || '').trim()).filter(Boolean);
+      fluid = replaceSloganList(fluid, cleaned);
+    }
+    await fs.writeFile(hexoConfig, main, 'utf8');
+    await fs.writeFile(fluidPath, fluid, 'utf8');
+    res.json({ ok: true });
+  } catch (error) {
+    res.status(500).json({ error: `保存站点配置失败：${error.message}` });
+  }
+});
+
 app.post('/api/posts', auth, async (req, res) => {
   await ensureDirs();
   const title = req.body.title || '未命名文章';
@@ -549,6 +683,43 @@ app.post('/api/upload-protected', auth, upload.single('file'), async (req, res) 
 
 app.post('/api/build', auth, async (_req, res) => {
   res.json(await run('npm.cmd', ['run', 'build']));
+});
+
+app.post('/api/import-md', auth, upload.single('file'), async (req, res) => {
+  await ensureDirs();
+  if (!req.file) {
+    res.status(400).json({ error: '请选择 Markdown 文件' });
+    return;
+  }
+  const ext = path.extname(req.file.originalname).toLowerCase();
+  if (ext !== '.md' && ext !== '.markdown') {
+    await fs.rm(req.file.path, { force: true });
+    res.status(400).json({ error: '只能导入 .md 或 .markdown 文件' });
+    return;
+  }
+  try {
+    const raw = await fs.readFile(req.file.path, 'utf8');
+    const parsed = matter(raw);
+    const titleFromFM = parsed.data && parsed.data.title;
+    const titleFromName = path.basename(req.file.originalname, ext);
+    const title = String(titleFromFM || titleFromName || '未命名文章').trim();
+    const file = await uniquePostFile(safeName(title, `post-${Date.now()}`));
+    const stickyValue = parsed.data && Number(parsed.data.sticky);
+    const postBody = {
+      title,
+      date: parsed.data && parsed.data.date ? String(parsed.data.date) : todayString(),
+      categories: parsed.data ? parsed.data.categories : [],
+      tags: parsed.data ? parsed.data.tags : [],
+      sticky: Number.isFinite(stickyValue) ? stickyValue : 0,
+      content: parsed.content.trimStart(),
+    };
+    await fs.writeFile(path.join(postsDir, file), postMarkdown(postBody), 'utf8');
+    await fs.rm(req.file.path, { force: true });
+    res.json(await readPost(file));
+  } catch (error) {
+    await fs.rm(req.file.path, { force: true });
+    res.status(500).json({ error: `导入失败：${error.message}` });
+  }
 });
 
 app.post('/api/publish', auth, async (_req, res) => {

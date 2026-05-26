@@ -293,3 +293,78 @@ textarea:focus {
   justify-content: flex-end;
   gap: 0.5rem;
 }
+
+/* —— 新增样式 —— */
+.checkbox-label {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text);
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.post-item-wrap {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.3rem;
+  align-items: stretch;
+}
+
+.post-item-wrap .post-item {
+  width: 100%;
+}
+
+.post-del {
+  padding: 0 0.6rem;
+  color: var(--muted);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  font-size: 1rem;
+}
+
+.post-del:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.modal-wide {
+  width: min(640px, 100%);
+}
+
+.modal-panel .hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.modal-panel textarea {
+  min-height: 6rem;
+  font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+}
+
+.drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  background: rgba(22, 119, 255, 0.18);
+  border: 4px dashed var(--accent);
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.drop-hint {
+  background: #fff;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  box-shadow: 0 18px 45px rgba(25, 39, 52, 0.18);
+}

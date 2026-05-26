@@ -26,6 +26,8 @@
           <span>本地管理员</span>
         </div>
         <button id="newPost" class="primary">新建文章</button>
+        <button id="importMdBtn">导入 Markdown 文件</button>
+        <button id="siteConfigBtn">主页设置</button>
         <button id="contactBtn">联系方式</button>
         <button id="policyBtn">安全策略</button>
         <div id="postList" class="post-list"></div>
@@ -65,6 +67,10 @@
             标签
             <input id="tags" placeholder="多个用逗号分隔">
           </label>
+          <label class="checkbox-label">
+            <input id="sticky" type="checkbox">
+            <span>在首页置顶这篇文章</span>
+          </label>
         </div>
 
         <textarea id="content" spellcheck="false" placeholder="在这里写正文，支持 Markdown。"></textarea>
@@ -80,7 +86,30 @@
 
       <input id="fileInput" type="file" class="hidden" accept=".pdf,.doc,.docx,.pptx,.xlsx,.zip,.png,.jpg,.jpeg,.gif,.webp">
       <input id="protectedFileInput" type="file" class="hidden" accept=".pdf,.doc,.docx,.pptx,.xlsx,.zip,.png,.jpg,.jpeg,.webp">
+      <input id="mdImportInput" type="file" class="hidden" accept=".md,.markdown" multiple>
     </main>
+
+    <div id="dropOverlay" class="drop-overlay hidden">
+      <div class="drop-hint">松开鼠标，把 Markdown 文件导入为文章</div>
+    </div>
+
+    <div id="siteConfigModal" class="modal hidden">
+      <form class="modal-panel modal-wide">
+        <h2>主页设置</h2>
+        <label>站点标题（浏览器标签）<input id="cfgTitle" placeholder="例如：ASHUWEI 的笔记"></label>
+        <label>副标题（站名下方一行）<input id="cfgSubtitle" placeholder="例如：记录学习与生活"></label>
+        <label>网站描述（用于搜索引擎）<input id="cfgDescription" placeholder="网站介绍，建议一两句话"></label>
+        <label>作者名<input id="cfgAuthor" placeholder="例如：ASHUWEI"></label>
+        <label>关于页 - 显示名<input id="cfgAboutName" placeholder="关于我里显示的大名字"></label>
+        <label>关于页 - 个人介绍<input id="cfgAboutIntro" placeholder="一句话介绍自己"></label>
+        <label>首页打字机轮播（每行一句）<textarea id="cfgSlogans" rows="4" placeholder="一行一句，会随机循环显示"></textarea></label>
+        <p class="hint">保存后需要"发布上线"才能让公开博客看到变化。</p>
+        <div class="modal-actions">
+          <button type="button" id="closeSiteConfig">取消</button>
+          <button type="submit" class="primary">保存设置</button>
+        </div>
+      </form>
+    </div>
 
     <div id="contactModal" class="modal hidden">
       <form class="modal-panel">

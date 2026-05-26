@@ -1,23 +1,14 @@
 ---
 title: 博客文件上传与密码预览功能记录
-date: 2026-05-26 10:30:00
-updated: 2026-05-26 12:20:00
-author: ASHUWEI
+date: '2026-05-26 13:49:38'
 categories:
   - 博客搭建
 tags:
   - 文件上传
   - PDF
   - 安全预览
-description: 记录博客后台的文件上传、密码保护、水印预览和公开访问之间的关系，说明静态博客中资料保护的边界。
-excerpt: 静态博客可以实现密码保护、水印预览和文件加密存储，但无法从根本上阻止截图或录屏，需要结合内容分级来使用。
-cover: /img/home-banner.png
-index_img: /img/home-banner.png
-banner_img: /img/home-banner.png
-top: false
-sticky: 6
+sticky: 100
 ---
-
 ## 背景
 
 博客除了写文章，也可能需要放 PDF、Word 或学习资料。为了避免资料被直接下载，当前后台支持“安全上传”：

@@ -28,6 +28,7 @@ function postForm() {
     slug: $('slug').value.trim(),
     categories: $('categories').value.trim(),
     tags: $('tags').value.trim(),
+    sticky: $('sticky').checked ? 100 : 0,
     content: $('content').value,
   };
 }
@@ -40,6 +41,7 @@ function fillEditor(post) {
   $('slug').value = currentFile ? currentFile.replace(/\.md$/i, '') : '';
   $('categories').value = Array.isArray(post.categories) ? post.categories.join(', ') : '';
   $('tags').value = Array.isArray(post.tags) ? post.tags.join(', ') : '';
+  $('sticky').checked = Number(post.sticky) > 0;
   $('content').value = post.content || '';
 }
 
@@ -47,12 +49,37 @@ async function loadPosts() {
   const posts = await api('/api/posts');
   $('postList').innerHTML = '';
   posts.forEach((post) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'post-item-wrap';
     const button = document.createElement('button');
     button.className = 'post-item';
-    button.innerHTML = `<strong>${post.title}</strong><span>${post.file}</span>`;
+    const stickyMark = Number(post.sticky) > 0 ? '📌 ' : '';
+    button.innerHTML = `<strong>${stickyMark}${post.title}</strong><span>${post.file}</span>`;
     button.onclick = () => openPost(post.file);
-    $('postList').appendChild(button);
+    const del = document.createElement('button');
+    del.className = 'post-del';
+    del.title = '删除这篇文章';
+    del.textContent = '🗑';
+    del.onclick = (e) => {
+      e.stopPropagation();
+      deletePost(post.file, post.title);
+    };
+    wrap.appendChild(button);
+    wrap.appendChild(del);
+    $('postList').appendChild(wrap);
   });
+}
+
+async function deletePost(file, title) {
+  if (!confirm(`确定要删除文章「${title}」吗？\n\n本地文件会立即删除，\n点击"发布上线"后公开博客上也会消失。`)) return;
+  try {
+    await api(`/api/posts/${encodeURIComponent(file)}`, { method: 'DELETE' });
+    log(`已删除：${title}`);
+    if (currentFile === file) newPost();
+    await loadPosts();
+  } catch (error) {
+    log(`删除失败：${error.message}`);
+  }
 }
 
 async function openContact() {
@@ -76,6 +103,7 @@ function newPost() {
     file: '',
     categories: [],
     tags: [],
+    sticky: 0,
     content: '# 标题\n\n这里开始写正文。\n',
   });
   log('已新建草稿，保存后会写入文章目录。');
@@ -138,6 +166,72 @@ async function uploadProtectedFile(file) {
   log(`安全文档已上传：${data.url}\n请记住密码，系统不会保存明文密码。\n提示：公开网页无法绝对禁止截图或录屏，但这个模式不会发布原文件明文。`);
 }
 
+async function importMarkdown(file) {
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch('/api/import-md', {
+    method: 'POST',
+    headers: { 'x-admin-token': token },
+    body: form,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || '导入失败');
+  return data;
+}
+
+async function importMarkdownFiles(files) {
+  if (!files || !files.length) return;
+  const list = Array.from(files);
+  log(`开始导入 ${list.length} 个 Markdown 文件...`);
+  let lastPost = null;
+  for (const file of list) {
+    try {
+      const post = await importMarkdown(file);
+      lastPost = post;
+      log(`已导入：${post.title}（${post.file}）`);
+    } catch (error) {
+      log(`导入「${file.name}」失败：${error.message}`);
+    }
+  }
+  await loadPosts();
+  if (lastPost) fillEditor(lastPost);
+  log(`导入完成，可在左侧文章列表查看。点击"发布上线"才会同步到公开博客。`);
+}
+
+async function openSiteConfig() {
+  try {
+    const cfg = await api('/api/site-config');
+    $('cfgTitle').value = cfg.title || '';
+    $('cfgSubtitle').value = cfg.subtitle || '';
+    $('cfgDescription').value = cfg.description || '';
+    $('cfgAuthor').value = cfg.author || '';
+    $('cfgAboutName').value = cfg.aboutName || '';
+    $('cfgAboutIntro').value = cfg.aboutIntro || '';
+    $('cfgSlogans').value = (cfg.slogans || []).join('\n');
+    $('siteConfigModal').classList.remove('hidden');
+  } catch (error) {
+    log(`读取主页设置失败：${error.message}`);
+  }
+}
+
+async function saveSiteConfig() {
+  const slogans = $('cfgSlogans').value.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+  await api('/api/site-config', {
+    method: 'PUT',
+    body: JSON.stringify({
+      title: $('cfgTitle').value,
+      subtitle: $('cfgSubtitle').value,
+      description: $('cfgDescription').value,
+      author: $('cfgAuthor').value,
+      aboutName: $('cfgAboutName').value,
+      aboutIntro: $('cfgAboutIntro').value,
+      slogans,
+    }),
+  });
+  $('siteConfigModal').classList.add('hidden');
+  log('主页设置已保存，发布上线后公开博客会显示新内容。');
+}
+
 async function command(url, label) {
   log(`${label}中，请稍等...`);
   const result = await api(url, { method: 'POST', body: '{}' });
@@ -185,6 +279,18 @@ $('login').querySelector('form').onsubmit = async (event) => {
 };
 
 $('newPost').onclick = newPost;
+$('importMdBtn').onclick = () => $('mdImportInput').click();
+$('siteConfigBtn').onclick = () => openSiteConfig().catch((error) => log(error.message));
+$('closeSiteConfig').onclick = () => $('siteConfigModal').classList.add('hidden');
+$('siteConfigModal').querySelector('form').onsubmit = (event) => {
+  event.preventDefault();
+  saveSiteConfig().catch((error) => log(error.message));
+};
+$('mdImportInput').onchange = () => {
+  const files = $('mdImportInput').files;
+  if (files && files.length) importMarkdownFiles(files).catch((error) => log(error.message));
+  $('mdImportInput').value = '';
+};
 $('contactBtn').onclick = () => openContact().catch((error) => log(error.message));
 $('policyBtn').onclick = () => $('policyModal').classList.remove('hidden');
 $('closeContact').onclick = () => $('contactModal').classList.add('hidden');
@@ -229,3 +335,33 @@ if (token) {
     location.reload();
   });
 }
+
+// 全局拖拽支持：把 .md 文件拖到窗口任意位置即可导入
+let dragCounter = 0;
+window.addEventListener('dragenter', (e) => {
+  if (!token) return;
+  if (!e.dataTransfer || !Array.from(e.dataTransfer.types || []).includes('Files')) return;
+  dragCounter += 1;
+  $('dropOverlay').classList.remove('hidden');
+});
+window.addEventListener('dragover', (e) => {
+  if (!token) return;
+  e.preventDefault();
+});
+window.addEventListener('dragleave', () => {
+  if (!token) return;
+  dragCounter = Math.max(0, dragCounter - 1);
+  if (dragCounter === 0) $('dropOverlay').classList.add('hidden');
+});
+window.addEventListener('drop', (e) => {
+  if (!token) return;
+  e.preventDefault();
+  dragCounter = 0;
+  $('dropOverlay').classList.add('hidden');
+  const files = Array.from((e.dataTransfer && e.dataTransfer.files) || []).filter((f) => /\.(md|markdown)$/i.test(f.name));
+  if (files.length === 0) {
+    log('只支持拖拽 .md / .markdown 文件，其他文件请用上方"公开上传/安全上传"按钮。');
+    return;
+  }
+  importMarkdownFiles(files).catch((error) => log(error.message));
+});

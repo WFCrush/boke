@@ -3,11 +3,11 @@
 ## Source: https://github.com/hexojs/hexo/
 
 # Site
-title: ASHUWEI 的技术笔记
-subtitle: 记录编程学习与技术成长的点滴
-description: 'ASHUWEI 的技术笔记，面向计算机专业学生，记录技术学习笔记、编程实践、项目复盘和踩坑经验。'
+title: 晚风の技术笔记
+subtitle: claude-opus-4-7
+description: 人无法同时获得青春和对青春的感受
 keywords: 计算机专业,编程学习,技术笔记,Hexo,Fluid,前端开发,后端开发,GitHub Pages
-author: ASHUWEI
+author: 晚风
 language: zh-CN
 timezone: Asia/Shanghai
 
