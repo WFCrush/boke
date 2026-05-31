@@ -14,6 +14,8 @@ const root = path.resolve(__dirname, '..');
 const postsDir = path.join(root, 'source', '_posts');
 const uploadsDir = path.join(root, 'source', 'uploads');
 const secureDir = path.join(root, 'source', 'secure');
+const backupDir = path.join(root, '.admin-backups', 'posts');
+const trashDir = path.join(root, '.admin-trash', 'posts');
 const contactFile = path.join(root, 'source', 'contact', 'contact.json');
 const publicDir = path.join(__dirname, 'public');
 const hexoConfig = path.join(root, '_config.yml');
@@ -65,6 +67,32 @@ function todayString() {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 }
 
+function timestampName() {
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+}
+
+function assertSafeMdFile(file) {
+  if (!file.endsWith('.md') || file.includes('/') || file.includes('\\')) {
+    throw new Error('文件名不合法');
+  }
+}
+
+async function backupPost(file, reason = 'save') {
+  assertSafeMdFile(file);
+  await ensureDirs();
+  const source = path.join(postsDir, file);
+  try {
+    await fs.access(source);
+  } catch (_) {
+    return '';
+  }
+  const target = path.join(backupDir, `${timestampName()}-${reason}-${safeName(file.replace(/\.md$/i, ''), 'post')}.md`);
+  await fs.copyFile(source, target);
+  return path.basename(target);
+}
+
 async function getSiteRoot() {
   try {
     const config = await fs.readFile(hexoConfig, 'utf8');
@@ -99,21 +127,31 @@ async function ensureDirs() {
   await fs.mkdir(postsDir, { recursive: true });
   await fs.mkdir(uploadsDir, { recursive: true });
   await fs.mkdir(secureDir, { recursive: true });
+  await fs.mkdir(backupDir, { recursive: true });
+  await fs.mkdir(trashDir, { recursive: true });
   await fs.mkdir(path.dirname(contactFile), { recursive: true });
 }
 
 async function readPost(file) {
   const fullPath = path.join(postsDir, file);
   const raw = await fs.readFile(fullPath, 'utf8');
+  const stat = await fs.stat(fullPath);
   const parsed = matter(raw);
   return {
     file,
     title: parsed.data.title || file.replace(/\.md$/i, ''),
     date: parsed.data.date || '',
+    updated: parsed.data.updated || stat.mtime,
     categories: parsed.data.categories || [],
     tags: parsed.data.tags || [],
+    description: parsed.data.description || '',
+    excerpt: parsed.data.excerpt || '',
+    cover: parsed.data.cover || '',
+    index_img: parsed.data.index_img || '',
+    banner_img: parsed.data.banner_img || '',
     sticky: parsed.data.sticky || 0,
     content: parsed.content.trimStart(),
+    modifiedAt: stat.mtime,
   };
 }
 
@@ -130,9 +168,14 @@ function postMarkdown(input) {
   const data = {
     title: input.title || '未命名文章',
     date: input.date || todayString(),
+    updated: todayString(),
     categories: normalizeList(input.categories),
     tags: normalizeList(input.tags),
   };
+  ['description', 'excerpt', 'cover', 'index_img', 'banner_img'].forEach((key) => {
+    const value = String(input[key] || '').trim();
+    if (value) data[key] = value;
+  });
   const stickyValue = Number(input.sticky);
   if (Number.isFinite(stickyValue) && stickyValue > 0) {
     data.sticky = stickyValue;
@@ -649,21 +692,83 @@ app.post('/api/posts', auth, async (req, res) => {
 app.put('/api/posts/:file', auth, async (req, res) => {
   await ensureDirs();
   const file = req.params.file;
-  if (!file.endsWith('.md') || file.includes('/') || file.includes('\\')) {
-    res.status(400).json({ error: '文件名不合法' });
+  try {
+    assertSafeMdFile(file);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
     return;
   }
+  await backupPost(file, 'save');
   await fs.writeFile(path.join(postsDir, file), postMarkdown(req.body), 'utf8');
   res.json(await readPost(file));
 });
 
 app.delete('/api/posts/:file', auth, async (req, res) => {
+  await ensureDirs();
   const file = req.params.file;
-  if (!file.endsWith('.md') || file.includes('/') || file.includes('\\')) {
-    res.status(400).json({ error: '文件名不合法' });
+  try {
+    assertSafeMdFile(file);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
     return;
   }
-  await fs.rm(path.join(postsDir, file), { force: true });
+  await backupPost(file, 'delete');
+  const source = path.join(postsDir, file);
+  const target = path.join(trashDir, `${timestampName()}-${safeName(file.replace(/\.md$/i, ''), 'post')}.md`);
+  try {
+    await fs.rename(source, target);
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+  res.json({ ok: true });
+});
+
+app.get('/api/trash', auth, async (_req, res) => {
+  await ensureDirs();
+  const files = (await fs.readdir(trashDir)).filter((file) => file.endsWith('.md'));
+  const items = await Promise.all(files.map(async (file) => {
+    const raw = await fs.readFile(path.join(trashDir, file), 'utf8');
+    const stat = await fs.stat(path.join(trashDir, file));
+    const parsed = matter(raw);
+    return {
+      file,
+      title: parsed.data.title || file.replace(/\.md$/i, ''),
+      date: parsed.data.date || '',
+      deletedAt: stat.mtime,
+    };
+  }));
+  items.sort((a, b) => String(b.deletedAt).localeCompare(String(a.deletedAt)));
+  res.json(items);
+});
+
+app.post('/api/trash/:file/restore', auth, async (req, res) => {
+  await ensureDirs();
+  const file = req.params.file;
+  try {
+    assertSafeMdFile(file);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+    return;
+  }
+  const raw = await fs.readFile(path.join(trashDir, file), 'utf8');
+  const parsed = matter(raw);
+  const title = parsed.data.title || file.replace(/^\d{8}-\d{6}-/, '').replace(/\.md$/i, '');
+  const restoredFile = await uniquePostFile(safeName(title, 'restored-post'));
+  await fs.writeFile(path.join(postsDir, restoredFile), raw, 'utf8');
+  await fs.rm(path.join(trashDir, file), { force: true });
+  res.json(await readPost(restoredFile));
+});
+
+app.delete('/api/trash/:file', auth, async (req, res) => {
+  await ensureDirs();
+  const file = req.params.file;
+  try {
+    assertSafeMdFile(file);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+    return;
+  }
+  await fs.rm(path.join(trashDir, file), { force: true });
   res.json({ ok: true });
 });
 

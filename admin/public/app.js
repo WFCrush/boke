@@ -76,6 +76,11 @@ function postForm() {
     slug: '',
     categories: $('categories').value.trim(),
     tags: $('tags').value.trim(),
+    description: $('description').value.trim(),
+    excerpt: $('excerpt').value.trim(),
+    cover: $('cover').value.trim(),
+    index_img: $('indexImg').value.trim(),
+    banner_img: $('bannerImg').value.trim(),
     sticky: $('sticky').checked ? 100 : 0,
     date: dateStr ? dateStr.replace('T', ' ') + ':00' : '',
     content: $('content').value,
@@ -88,6 +93,11 @@ function fillEditor(post) {
   $('title').value = post.title || '';
   $('categories').value = Array.isArray(post.categories) ? post.categories.join(', ') : (post.categories || '');
   $('tags').value = Array.isArray(post.tags) ? post.tags.join(', ') : (post.tags || '');
+  $('description').value = post.description || '';
+  $('excerpt').value = post.excerpt || '';
+  $('cover').value = post.cover || '';
+  $('indexImg').value = post.index_img || '';
+  $('bannerImg').value = post.banner_img || '';
   $('sticky').checked = Number(post.sticky) > 0;
   $('content').value = post.content || '';
   if (post.date) {
@@ -113,6 +123,11 @@ function newPost() {
     file: '',
     categories: '',
     tags: '',
+    description: '',
+    excerpt: '',
+    cover: '/img/home-banner.png',
+    index_img: '/img/home-banner.png',
+    banner_img: '/img/home-banner.png',
     sticky: 0,
     date: `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:00`,
     content: '',
@@ -388,6 +403,11 @@ async function tryRestoreDraft() {
         file: draft.file || '',
         categories: draft.categories || '',
         tags: draft.tags || '',
+        description: draft.description || '',
+        excerpt: draft.excerpt || '',
+        cover: draft.cover || '',
+        index_img: draft.index_img || '',
+        banner_img: draft.banner_img || '',
         sticky: draft.sticky || 0,
         date: draft.date || '',
         content: draft.content || '',
@@ -449,6 +469,60 @@ async function importMarkdownFiles(files) {
   await loadPosts();
   if (lastPost) fillEditor(lastPost);
   toast(`导入完成：${okCount}/${list.length} 篇`, 'success');
+}
+
+// ===== 回收站 =====
+async function loadTrash() {
+  try {
+    const items = await api('/api/trash');
+    const tbody = $('trashTableBody');
+    if (!items.length) {
+      tbody.innerHTML = '<tr><td colspan="3" class="empty">回收站是空的</td></tr>';
+      return;
+    }
+    tbody.innerHTML = '';
+    items.forEach((item) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${escapeHtml(item.title)}</td>
+        <td>${formatDateText(item.deletedAt)}</td>
+        <td>
+          <button class="ghost-btn small" data-action="restore">恢复</button>
+          <button class="ghost-btn small danger-text" data-action="purge">永久删除</button>
+        </td>
+      `;
+      tr.querySelector('[data-action="restore"]').onclick = () => restoreTrash(item.file);
+      tr.querySelector('[data-action="purge"]').onclick = () => purgeTrash(item.file, item.title);
+      tbody.appendChild(tr);
+    });
+  } catch (error) {
+    toast('读取回收站失败：' + error.message, 'error');
+  }
+}
+
+async function restoreTrash(file) {
+  try {
+    const post = await api(`/api/trash/${encodeURIComponent(file)}/restore`, { method: 'POST', body: '{}' });
+    toast('已恢复文章', 'success');
+    await loadPosts();
+    await loadTrash();
+    fillEditor(post);
+    switchTab('editor');
+  } catch (error) {
+    toast('恢复失败：' + error.message, 'error');
+  }
+}
+
+async function purgeTrash(file, title) {
+  const ok = await confirmDialog('永久删除', `确定永久删除「${title}」吗？这个操作不能恢复。`, true);
+  if (!ok) return;
+  try {
+    await api(`/api/trash/${encodeURIComponent(file)}`, { method: 'DELETE' });
+    toast('已永久删除', 'success');
+    await loadTrash();
+  } catch (error) {
+    toast('删除失败：' + error.message, 'error');
+  }
 }
 
 // ===== 站点配置 =====
@@ -559,7 +633,7 @@ function switchTab(tab) {
   $$('.nav-tab').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
   $$('.tab-panel').forEach((p) => p.classList.toggle('active', p.dataset.panel === tab));
   if (tab === 'site') loadSiteConfig();
-  if (tab === 'more') loadContact();
+  if (tab === 'more') { loadContact(); loadTrash(); }
   if (tab === 'posts') renderPostTable();
 }
 
@@ -580,6 +654,14 @@ function applyStoredTheme() {
 // ===== 工具函数 =====
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function formatDateText(value) {
+  if (!value) return '';
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return String(value).slice(0, 16);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 // ===== 事件绑定 =====
@@ -611,6 +693,11 @@ function bindEvents() {
   $('title').oninput = markDirty;
   $('categories').oninput = markDirty;
   $('tags').oninput = markDirty;
+  $('description').oninput = markDirty;
+  $('excerpt').oninput = markDirty;
+  $('cover').oninput = markDirty;
+  $('indexImg').oninput = markDirty;
+  $('bannerImg').oninput = markDirty;
   $('postDate').oninput = markDirty;
   $('sticky').onchange = markDirty;
   $('content').oninput = () => {
@@ -647,6 +734,7 @@ function bindEvents() {
 
   // 联系方式
   $('saveContact').onclick = saveContact;
+  $('reloadTrash').onclick = loadTrash;
 
   // 文件上传
   $('fileInput').onchange = () => {

@@ -8,4 +8,6 @@ source/opt-images/
 .deploy*/
 _multiconfig.yml
 .admin-tmp/
+.admin-backups/
+.admin-trash/
 .admin-password

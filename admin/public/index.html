@@ -82,6 +82,33 @@
                   <span>📌 置顶</span>
                 </label>
               </div>
+              <details class="advanced-meta">
+                <summary>摘要和封面图</summary>
+                <div class="meta-row meta-row-wide">
+                  <label class="meta-field">
+                    <span>文章摘要</span>
+                    <input id="description" placeholder="80-150 字，给搜索引擎和分享卡片使用">
+                  </label>
+                  <label class="meta-field">
+                    <span>首页摘要</span>
+                    <input id="excerpt" placeholder="首页文章卡片显示的简短介绍">
+                  </label>
+                </div>
+                <div class="meta-row meta-row-wide">
+                  <label class="meta-field">
+                    <span>封面图</span>
+                    <input id="cover" placeholder="例如 /img/home-banner.png">
+                  </label>
+                  <label class="meta-field">
+                    <span>首页图</span>
+                    <input id="indexImg" placeholder="例如 /img/home-banner.png">
+                  </label>
+                  <label class="meta-field">
+                    <span>顶部图</span>
+                    <input id="bannerImg" placeholder="例如 /img/home-banner.png">
+                  </label>
+                </div>
+              </details>
             </div>
 
             <!-- Markdown 工具栏 -->
@@ -224,6 +251,20 @@
             <div class="form-actions">
               <button id="saveContact" class="primary">💾 保存</button>
             </div>
+          </div>
+
+          <div class="card">
+            <h2>🗑 回收站</h2>
+            <p class="muted">删除文章不会立刻消失，会先放到这里。需要时可以恢复。</p>
+            <div class="form-actions left-actions">
+              <button id="reloadTrash" class="ghost-btn">刷新回收站</button>
+            </div>
+            <table class="post-table">
+              <thead>
+                <tr><th>标题</th><th>删除时间</th><th>操作</th></tr>
+              </thead>
+              <tbody id="trashTableBody"><tr><td colspan="3" class="empty">点击刷新查看</td></tr></tbody>
+            </table>
           </div>
 
           <div class="card">
