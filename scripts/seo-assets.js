@@ -12,6 +12,54 @@ function setAttr(tag, name, value) {
   return tag.replace(/>$/, ' ' + name + '="' + value + '">');
 }
 
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function siteRoot() {
+  return String(hexo.config.root || '/').replace(/\/?$/, '/');
+}
+
+function fixOptimizedImagePaths(html) {
+  const root = siteRoot();
+  return html.replace(/(^|["'\s(,])opt-images\//g, '$1' + root + 'opt-images/');
+}
+
+function protectMathMarkdown(content) {
+  const codeBlocks = [];
+  let text = String(content || '').replace(/^```\s*math\s*\r?\n([\s\S]*?)\r?\n```\s*$/gm, function (_, body) {
+    return '\n$$\n' + body.trim() + '\n$$\n';
+  });
+
+  text = text.replace(/^```[\s\S]*?^```/gm, function (block) {
+    const token = '\u0000CODE_BLOCK_' + codeBlocks.length + '\u0000';
+    codeBlocks.push(block);
+    return token;
+  });
+
+  text = text.replace(/(^|\n)[ \t]*\$\$[ \t]*\r?\n([\s\S]*?)\r?\n[ \t]*\$\$[ \t]*(?=\r?\n|$)/g, function (_, prefix, body) {
+    return prefix + '<div class="math-display">$$\n' + escapeHtml(body.trim()) + '\n$$</div>';
+  });
+
+  text = text.replace(/(^|[^\\$])\$([^\n$]+?)\$/g, function (_, prefix, body) {
+    return prefix + '<span class="math-inline">$' + escapeHtml(body) + '$</span>';
+  });
+
+  codeBlocks.forEach(function (block, index) {
+    text = text.replace('\u0000CODE_BLOCK_' + index + '\u0000', block);
+  });
+
+  return text;
+}
+
+hexo.extend.filter.register('before_post_render', function (data) {
+  data.content = protectMathMarkdown(data.content);
+  return data;
+});
+
 hexo.extend.filter.register('after_post_render', function (data) {
   const title = data.title || hexo.config.title || 'ASHUWEI 的技术笔记';
   data.content = data.content.replace(/<img\b([^>]*)>/gi, function (tag) {
@@ -66,6 +114,7 @@ hexo.extend.filter.register('after_generate', function () {
           if (!attr(next, 'alt')) next = setAttr(next, 'alt', pageTitle + '配图');
           return next;
         });
+        html = fixOptimizedImagePaths(html);
 
         hexo.route.set(route, html);
         resolve();
