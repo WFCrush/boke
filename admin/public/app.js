@@ -54,15 +54,27 @@ function log(message) {
 }
 
 // ===== API 封装 =====
+function friendlyNetworkError(error) {
+  if (error && error.name === 'TypeError' && String(error.message || '').includes('fetch')) {
+    return '连接不到本地后台服务。请确认“博客后台服务”窗口还开着，然后刷新页面再试。';
+  }
+  return error.message || '操作失败';
+}
+
 async function api(url, options = {}) {
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'x-admin-token': token,
-      ...(options.headers || {}),
-    },
-  });
+  let res;
+  try {
+    res = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-token': token,
+        ...(options.headers || {}),
+      },
+    });
+  } catch (error) {
+    throw new Error(friendlyNetworkError(error));
+  }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || '操作失败');
   return data;
@@ -157,18 +169,23 @@ function renderPostList() {
   list.innerHTML = '';
   const filtered = allPosts.filter((p) => p.title.toLowerCase().includes(keyword) || p.file.toLowerCase().includes(keyword));
   if (filtered.length === 0) {
-    list.innerHTML = '<div class="empty">没有匹配的文章</div>';
+    list.innerHTML = '<div class="empty empty-card"><strong>没有找到文章</strong><span>换个关键词试试，或新建一篇文章。</span></div>';
     return;
   }
   filtered.forEach((post) => {
     const item = document.createElement('div');
     item.className = `post-card ${post.file === currentFile ? 'active' : ''}`;
-    const stickyMark = Number(post.sticky) > 0 ? '<span class="badge">📌</span>' : '';
+    const stickyMark = Number(post.sticky) > 0 ? '<span class="badge badge-pin">置顶</span>' : '';
     const cat = (post.categories || []).join('/');
-    const dateText = post.date ? String(post.date).slice(0, 10) : '';
+    const dateText = post.date ? String(post.date).slice(0, 10) : '未设置日期';
+    const tagText = (post.tags || []).slice(0, 2).map((t) => `<span class="mini-tag">${escapeHtml(t)}</span>`).join('');
     item.innerHTML = `
-      <div class="post-card-title">${stickyMark}${escapeHtml(post.title)}</div>
+      <div class="post-card-top">
+        <div class="post-card-title">${escapeHtml(post.title)}</div>
+        ${stickyMark}
+      </div>
       <div class="post-card-meta">${cat ? `📁 ${escapeHtml(cat)} · ` : ''}${dateText}</div>
+      ${tagText ? `<div class="post-card-tags">${tagText}</div>` : ''}
     `;
     item.onclick = () => openPost(post.file);
     list.appendChild(item);
@@ -188,12 +205,18 @@ function renderPostTable() {
   tbody.innerHTML = '';
   posts.forEach((post) => {
     const tr = document.createElement('tr');
+    const tags = (post.tags || []).slice(0, 3).map((t) => `<span class="mini-tag">${escapeHtml(t)}</span>`).join('');
+    const category = (post.categories || []).join('/') || '未分类';
     tr.innerHTML = `
-      <td><a href="#" class="post-link">${escapeHtml(post.title)}</a></td>
-      <td>${escapeHtml((post.categories || []).join('/'))}</td>
-      <td>${String(post.date || '').slice(0, 16)}</td>
-      <td>${Number(post.sticky) > 0 ? '📌' : ''}</td>
       <td>
+        <a href="#" class="post-link">${escapeHtml(post.title)}</a>
+        <div class="table-subtext">${escapeHtml(post.file)}</div>
+        ${tags ? `<div class="post-card-tags">${tags}</div>` : ''}
+      </td>
+      <td><span class="pill">${escapeHtml(category)}</span></td>
+      <td>${formatDateText(post.date)}</td>
+      <td>${Number(post.sticky) > 0 ? '<span class="badge badge-pin">置顶</span>' : '<span class="table-subtext">普通</span>'}</td>
+      <td class="table-actions">
         <button class="ghost-btn small" data-action="edit">编辑</button>
         <button class="ghost-btn small danger-text" data-action="delete">删除</button>
       </td>
@@ -203,7 +226,7 @@ function renderPostTable() {
     tr.querySelector('[data-action="delete"]').onclick = () => deletePost(post.file, post.title);
     tbody.appendChild(tr);
   });
-  if (posts.length === 0) tbody.innerHTML = '<tr><td colspan="5" class="empty">没有文章</td></tr>';
+  if (posts.length === 0) tbody.innerHTML = '<tr><td colspan="5" class="empty empty-card"><strong>没有文章</strong><span>可以先去写作页新建一篇。</span></td></tr>';
 }
 
 function renderStats() {
@@ -267,11 +290,11 @@ async function savePost(silent = false) {
 }
 
 async function deletePost(file, title) {
-  const ok = await confirmDialog('删除文章', `确定要删除「${title}」吗？\n本地文件会立刻删除，发布后公开博客也会消失。`, true);
+  const ok = await confirmDialog('移入回收站', `确定把「${title}」移入回收站吗？\n你可以在“更多 > 回收站”里恢复。`, true);
   if (!ok) return;
   try {
     await api(`/api/posts/${encodeURIComponent(file)}`, { method: 'DELETE' });
-    toast('已删除', 'success');
+    toast('已移入回收站', 'success');
     if (currentFile === file) newPost();
     await loadPosts();
   } catch (error) {
@@ -556,9 +579,9 @@ async function saveSiteConfig() {
         slogans,
       }),
     });
-    toast('已保存，记得去"写作"页发布上线', 'success', 3000);
+    toast('个人信息已保存，记得去“写作”页发布上线', 'success', 3000);
   } catch (error) {
-    toast('保存失败：' + error.message, 'error');
+    toast('个人信息保存失败：' + error.message, 'error', 6000);
   }
 }
 

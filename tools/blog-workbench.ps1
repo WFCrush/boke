@@ -9,8 +9,9 @@ function Open-CommandWindow {
     [string]$Command
   )
 
-  $script = "Set-Location -LiteralPath '$root'; `$Host.UI.RawUI.WindowTitle = '$Title'; $Command"
-  Start-Process powershell -ArgumentList @(
+  $safeRoot = $root.Path.Replace("'", "''")
+  $script = "Set-Location -LiteralPath '$safeRoot'; `$Host.UI.RawUI.WindowTitle = '$Title'; $Command"
+  Start-Process powershell.exe -ArgumentList @(
     '-NoProfile',
     '-ExecutionPolicy', 'Bypass',
     '-NoExit',

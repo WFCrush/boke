@@ -530,6 +530,10 @@ async function makePreview(inputPath, ext, base, originalName) {
 
 app.use(assertLocal);
 
+app.get('/api/ping', (_req, res) => {
+  res.json({ ok: true, time: new Date().toISOString() });
+});
+
 app.post('/api/login', (req, res) => {
   if (req.body.password !== password) {
     res.status(401).json({ error: '密码不正确' });
