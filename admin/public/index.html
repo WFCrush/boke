@@ -47,14 +47,14 @@
           <aside class="side-list">
             <div class="side-head">
               <button id="newPost" class="primary block-btn">＋ 新建文章</button>
-              <button id="importMdBtn" class="block-btn">📥 导入 .md 文件</button>
+              <button id="importMdBtn" class="block-btn">📥 导入 .md / .zip</button>
             </div>
             <div class="search-wrap">
               <input id="postSearch" placeholder="🔍 搜索文章标题..." />
             </div>
             <div id="postList" class="post-list-modern"></div>
             <div class="hint-box">
-              💡 把 .md 文件拖到本窗口任意位置即可批量导入
+              💡 把 .md 文件或“Markdown+图片”的 .zip 压缩包拖到本窗口即可导入
             </div>
           </aside>
 
@@ -126,6 +126,7 @@
               <button data-md="columns">⫴</button>
               <span class="toolbar-sep"></span>
               <button id="uploadBtn" title="上传图片/文件">🖼 上传</button>
+              <button id="zipUploadBtn" title="上传 ZIP 附件">📦 ZIP</button>
               <button id="protectedUploadBtn" title="加密上传">🔒 加密</button>
               <span class="toolbar-sep"></span>
               <button id="previewToggle" class="toggle-btn" title="预览 (Ctrl+P)">👁 预览</button>
@@ -296,8 +297,9 @@
 
       <!-- 隐藏的文件 input -->
       <input id="fileInput" type="file" class="hidden" accept=".pdf,.doc,.docx,.pptx,.xlsx,.zip,.png,.jpg,.jpeg,.gif,.webp">
+      <input id="zipFileInput" type="file" class="hidden" accept=".zip">
       <input id="protectedFileInput" type="file" class="hidden" accept=".pdf,.doc,.docx,.pptx,.xlsx,.zip,.png,.jpg,.jpeg,.webp">
-      <input id="mdImportInput" type="file" class="hidden" accept=".md,.markdown" multiple>
+      <input id="mdImportInput" type="file" class="hidden" accept=".md,.markdown,.zip" multiple>
     </main>
 
     <!-- 拖拽提示 -->

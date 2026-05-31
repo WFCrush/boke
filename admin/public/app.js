@@ -477,7 +477,7 @@ async function importMarkdown(file) {
 async function importMarkdownFiles(files) {
   if (!files || !files.length) return;
   const list = Array.from(files);
-  toast(`开始导入 ${list.length} 个文件...`, 'info');
+  toast(`开始导入 ${list.length} 个文章文件...`, 'info');
   let lastPost = null;
   let okCount = 0;
   for (const file of list) {
@@ -733,6 +733,7 @@ function bindEvents() {
   $$('.md-toolbar [data-md]').forEach((btn) => { btn.onclick = () => applyMdAction(btn.dataset.md); });
   $('previewToggle').onclick = togglePreview;
   $('uploadBtn').onclick = () => $('fileInput').click();
+  $('zipUploadBtn').onclick = () => $('zipFileInput').click();
   $('protectedUploadBtn').onclick = () => $('protectedFileInput').click();
 
   // 操作按钮
@@ -765,6 +766,11 @@ function bindEvents() {
     if (file) uploadFile(file).catch((e) => toast(e.message, 'error'));
     $('fileInput').value = '';
   };
+  $('zipFileInput').onchange = () => {
+    const [file] = $('zipFileInput').files;
+    if (file) uploadFile(file).catch((e) => toast(e.message, 'error'));
+    $('zipFileInput').value = '';
+  };
   $('protectedFileInput').onchange = () => {
     const [file] = $('protectedFileInput').files;
     if (file) uploadProtectedFile(file).catch((e) => toast(e.message, 'error'));
@@ -782,7 +788,7 @@ function bindEvents() {
     $('logToggle').textContent = $('logDrawer').classList.contains('collapsed') ? '▲' : '▼';
   };
 
-  // 全局拖拽（.md 文件 + 图片）
+  // 全局拖拽：编辑器里拖 ZIP 会作为附件上传；文章列表里拖 ZIP 会作为文章包导入。
   let dragCounter = 0;
   window.addEventListener('dragenter', (e) => {
     if (!token) return;
@@ -802,16 +808,19 @@ function bindEvents() {
     dragCounter = 0;
     $('dropOverlay').classList.add('hidden');
     const files = Array.from((e.dataTransfer && e.dataTransfer.files) || []);
-    const mdFiles = files.filter((f) => /\.(md|markdown)$/i.test(f.name));
-    const imgFiles = files.filter((f) => /\.(png|jpe?g|gif|webp)$/i.test(f.name));
-    if (mdFiles.length) {
-      await importMarkdownFiles(mdFiles);
-    } else if (imgFiles.length && currentTab === 'editor') {
-      for (const file of imgFiles) {
+    const markdownFiles = files.filter((f) => /\.(md|markdown)$/i.test(f.name));
+    const zipFiles = files.filter((f) => /\.zip$/i.test(f.name));
+    const attachFiles = files.filter((f) => /\.(zip|pdf|docx?|pptx|xlsx|png|jpe?g|gif|webp)$/i.test(f.name));
+    if (markdownFiles.length) {
+      await importMarkdownFiles(markdownFiles);
+    } else if (currentTab === 'editor' && attachFiles.length) {
+      for (const file of attachFiles) {
         try { await uploadFile(file); } catch (err) { toast(err.message, 'error'); }
       }
+    } else if (zipFiles.length) {
+      await importMarkdownFiles(zipFiles);
     } else if (files.length) {
-      toast('只支持拖拽 .md 文件或图片', 'info');
+      toast('编辑器支持拖拽 ZIP/图片/文档作为附件；文章列表支持 .md/.zip 文章包导入', 'info');
     }
   });
 

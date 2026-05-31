@@ -8,6 +8,7 @@ const express = require('express');
 const matter = require('gray-matter');
 const multer = require('multer');
 const mammoth = require('mammoth');
+const JSZip = require('jszip');
 const slugify = require('slugify');
 
 const root = path.resolve(__dirname, '..');
@@ -27,6 +28,8 @@ const sessions = new Map();
 const jobs = new Map();
 
 const app = express();
+
+const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 app.use(express.json({ limit: '2mb' }));
 app.use(express.static(publicDir));
@@ -181,6 +184,147 @@ function postMarkdown(input) {
     data.sticky = stickyValue;
   }
   return matter.stringify(String(input.content || '').trimStart(), data);
+}
+
+function zipPathName(value) {
+  return String(value || '')
+    .replace(/\\/g, '/')
+    .replace(/^\/+/, '')
+    .split('/')
+    .filter((part) => part && part !== '.')
+    .join('/');
+}
+
+function isUnsafeZipPath(name) {
+  const raw = String(name || '');
+  if (!raw || raw.includes('\0') || /^[a-zA-Z]:/.test(raw) || raw.startsWith('/') || raw.startsWith('\\')) return true;
+  return zipPathName(raw).split('/').some((part) => part === '..');
+}
+
+function isExternalUrl(value) {
+  return /^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/i.test(String(value || '').trim());
+}
+
+function decodeMdUrl(value) {
+  const cleaned = String(value || '').trim().replace(/^<|>$/g, '').split(/[?#]/)[0];
+  try {
+    return decodeURI(cleaned);
+  } catch (_) {
+    return cleaned;
+  }
+}
+
+function resolveZipAsset(markdownEntryName, link) {
+  const decoded = zipPathName(decodeMdUrl(link));
+  if (!decoded || isExternalUrl(link)) return '';
+  const baseDir = path.posix.dirname(zipPathName(markdownEntryName));
+  return zipPathName(path.posix.normalize(path.posix.join(baseDir === '.' ? '' : baseDir, decoded)));
+}
+
+async function uniqueUploadFileName(originalName, fallback = 'image') {
+  const ext = path.extname(originalName).toLowerCase();
+  const base = safeName(path.basename(originalName, ext), fallback);
+  let name = `${Date.now()}-${base}${ext}`;
+  let index = 2;
+  while (true) {
+    try {
+      await fs.access(path.join(uploadsDir, name));
+      name = `${Date.now()}-${base}-${index}${ext}`;
+      index += 1;
+    } catch (_) {
+      return name;
+    }
+  }
+}
+
+function makePostBody(parsed, originalName, ext, content) {
+  const titleFromFM = parsed.data && parsed.data.title;
+  const titleFromName = path.basename(originalName, ext);
+  const title = String(titleFromFM || titleFromName || '未命名文章').trim();
+  const stickyValue = parsed.data && Number(parsed.data.sticky);
+  return {
+    title,
+    date: parsed.data && parsed.data.date ? String(parsed.data.date) : todayString(),
+    categories: parsed.data ? parsed.data.categories : [],
+    tags: parsed.data ? parsed.data.tags : [],
+    description: parsed.data ? parsed.data.description : '',
+    excerpt: parsed.data ? parsed.data.excerpt : '',
+    cover: parsed.data ? parsed.data.cover : '',
+    index_img: parsed.data ? parsed.data.index_img : '',
+    banner_img: parsed.data ? parsed.data.banner_img : '',
+    sticky: Number.isFinite(stickyValue) ? stickyValue : 0,
+    content: String(content || '').trimStart(),
+  };
+}
+
+async function importMarkdownText(raw, originalName, ext) {
+  const parsed = matter(raw);
+  const postBody = makePostBody(parsed, originalName, ext, parsed.content);
+  const file = await uniquePostFile(safeName(postBody.title, `post-${Date.now()}`));
+  await fs.writeFile(path.join(postsDir, file), postMarkdown(postBody), 'utf8');
+  return readPost(file);
+}
+
+function referencedMarkdownImages(content) {
+  const refs = [];
+  const mdImageRe = /!\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
+  const htmlImageRe = /<img\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/gi;
+  let match;
+  while ((match = mdImageRe.exec(content))) refs.push(match[1]);
+  while ((match = htmlImageRe.exec(content))) refs.push(match[1]);
+  return Array.from(new Set(refs));
+}
+
+function replaceImageReference(content, originalRef, publicUrl) {
+  const escaped = originalRef.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return content
+    .replace(new RegExp(`(!\\[[^\\]]*\\]\\()${escaped}((?:\\s+"[^"]*")?\\))`, 'g'), `$1${publicUrl}$2`)
+    .replace(new RegExp(`(<img\\b[^>]*\\bsrc=["'])${escaped}(["'][^>]*>)`, 'gi'), `$1${publicUrl}$2`);
+}
+
+async function importZipPackage(filePath, originalName) {
+  const buffer = await fs.readFile(filePath);
+  const zip = await JSZip.loadAsync(buffer);
+  const entries = Object.values(zip.files)
+    .filter((entry) => !entry.dir)
+    .filter((entry) => !isUnsafeZipPath(entry.name))
+    .filter((entry) => !zipPathName(entry.name).split('/').some((part) => part === '__MACOSX' || part === '.DS_Store'));
+  const markdownEntries = entries.filter((entry) => /\.(md|markdown)$/i.test(zipPathName(entry.name)));
+  if (markdownEntries.length === 0) throw new Error('压缩包里没有找到 .md 或 .markdown 文件');
+  if (markdownEntries.length > 1) throw new Error('压缩包里只能包含一个 Markdown 文件');
+
+  const markdownEntry = markdownEntries[0];
+  const markdownEntryName = zipPathName(markdownEntry.name);
+  const imageExts = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp']);
+  const imageEntries = new Map();
+  entries.forEach((entry) => {
+    const normalized = zipPathName(entry.name);
+    if (imageExts.has(path.extname(normalized).toLowerCase())) imageEntries.set(normalized.toLowerCase(), entry);
+  });
+
+  let raw = await markdownEntry.async('string');
+  const parsed = matter(raw);
+  let content = parsed.content;
+  const rootPath = await getSiteRoot();
+  const siteRoot = rootPath.replace(/\/$/, '');
+  const copied = new Map();
+
+  for (const ref of referencedMarkdownImages(content)) {
+    if (isExternalUrl(ref) || ref.startsWith('/')) continue;
+    const assetPath = resolveZipAsset(markdownEntryName, ref);
+    const entry = imageEntries.get(assetPath.toLowerCase());
+    if (!entry) continue;
+    if (!copied.has(assetPath.toLowerCase())) {
+      const ext = path.extname(assetPath).toLowerCase();
+      const uploadName = await uniqueUploadFileName(path.basename(assetPath), 'image');
+      await fs.writeFile(path.join(uploadsDir, uploadName), await entry.async('nodebuffer'));
+      copied.set(assetPath.toLowerCase(), `${siteRoot}/uploads/${encodeURIComponent(uploadName)}`);
+    }
+    content = replaceImageReference(content, ref, copied.get(assetPath.toLowerCase()));
+  }
+
+  parsed.content = content;
+  return importMarkdownText(matter.stringify(parsed.content, parsed.data), path.basename(markdownEntryName), path.extname(markdownEntryName).toLowerCase());
 }
 
 function formatYamlValue(value) {
@@ -439,7 +583,7 @@ async function waitForDeployment(job, expectedSha) {
 
 async function runPublishJob(job) {
   try {
-    const build = await runStreaming(job, 'npm.cmd', ['run', 'build']);
+    const build = await runStreaming(job, npmCommand, ['run', 'build']);
     if (!build.ok) throw new Error('本地构建失败');
 
     await runStreaming(job, 'git', ['config', 'http.postBuffer', '524288000']);
@@ -842,40 +986,27 @@ app.post('/api/upload-protected', auth, upload.single('file'), async (req, res) 
 });
 
 app.post('/api/build', auth, async (_req, res) => {
-  res.json(await run('npm.cmd', ['run', 'build']));
+  res.json(await run(npmCommand, ['run', 'build']));
 });
 
 app.post('/api/import-md', auth, upload.single('file'), async (req, res) => {
   await ensureDirs();
   if (!req.file) {
-    res.status(400).json({ error: '请选择 Markdown 文件' });
+    res.status(400).json({ error: '请选择 Markdown 文件或 ZIP 压缩包' });
     return;
   }
   const ext = path.extname(req.file.originalname).toLowerCase();
-  if (ext !== '.md' && ext !== '.markdown') {
+  if (!['.md', '.markdown', '.zip'].includes(ext)) {
     await fs.rm(req.file.path, { force: true });
-    res.status(400).json({ error: '只能导入 .md 或 .markdown 文件' });
+    res.status(400).json({ error: '只能导入 .md、.markdown 或包含文章资源的 .zip 文件' });
     return;
   }
   try {
-    const raw = await fs.readFile(req.file.path, 'utf8');
-    const parsed = matter(raw);
-    const titleFromFM = parsed.data && parsed.data.title;
-    const titleFromName = path.basename(req.file.originalname, ext);
-    const title = String(titleFromFM || titleFromName || '未命名文章').trim();
-    const file = await uniquePostFile(safeName(title, `post-${Date.now()}`));
-    const stickyValue = parsed.data && Number(parsed.data.sticky);
-    const postBody = {
-      title,
-      date: parsed.data && parsed.data.date ? String(parsed.data.date) : todayString(),
-      categories: parsed.data ? parsed.data.categories : [],
-      tags: parsed.data ? parsed.data.tags : [],
-      sticky: Number.isFinite(stickyValue) ? stickyValue : 0,
-      content: parsed.content.trimStart(),
-    };
-    await fs.writeFile(path.join(postsDir, file), postMarkdown(postBody), 'utf8');
+    const post = ext === '.zip'
+      ? await importZipPackage(req.file.path, req.file.originalname)
+      : await importMarkdownText(await fs.readFile(req.file.path, 'utf8'), req.file.originalname, ext);
     await fs.rm(req.file.path, { force: true });
-    res.json(await readPost(file));
+    res.json(post);
   } catch (error) {
     await fs.rm(req.file.path, { force: true });
     res.status(500).json({ error: `导入失败：${error.message}` });
