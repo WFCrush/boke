@@ -30,13 +30,6 @@
       '</section>',
       '<section class="psc-console" aria-label="对话控制台">',
       '  <aside class="psc-control">',
-      '    <details class="psc-advanced">',
-      '      <summary>高级设置</summary>',
-      '      <label class="psc-field">',
-      '        <span>服务地址</span>',
-      '        <input id="pscApiBase" type="url" placeholder="https://your-api.example.com">',
-      '      </label>',
-      '    </details>',
       '    <label class="psc-field">',
       '      <span>会话密钥</span>',
       '      <input id="pscSecret" type="password" autocomplete="off" placeholder="至少 6 个字符">',
@@ -66,11 +59,9 @@
   }
 
   function apiBase() {
-    var input = byId('pscApiBase');
-    var configured = input && input.value.trim();
     var pageBase = root.getAttribute('data-api-base') || '';
     var globalBase = window.BOKE_SKILL_CHAT_API_BASE || '';
-    return (configured || pageBase || globalBase || window.location.origin).replace(/\/+$/, '');
+    return (pageBase || globalBase || '').replace(/\/+$/, '');
   }
 
   function endpoint(path) {
@@ -118,6 +109,9 @@
   }
 
   async function request(path, body) {
+    if (!apiBase()) {
+      throw new Error('站点尚未配置公开对话 API，请稍后再试。');
+    }
     var res = await fetch(endpoint(path), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -172,7 +166,6 @@
     try {
       setBusy(true);
       state.secret = secretValue();
-      localStorage.setItem('bokeSkillChatApiBase', apiBase());
       var session = await request('/session', { secret: state.secret });
       state.session = session;
       setStatus('ready', '会话已载入', session.status === 'ended' ? '这段对话已经结束，可查看分析。' : '可以继续对话。');
@@ -244,8 +237,9 @@
 
   function init() {
     mountShell();
-    var savedBase = localStorage.getItem('bokeSkillChatApiBase') || root.getAttribute('data-api-base') || window.BOKE_SKILL_CHAT_API_BASE || '';
-    byId('pscApiBase').value = savedBase || window.location.origin;
+    if (!apiBase()) {
+      setStatus('error', '暂未开放', '站点尚未配置公开对话 API。');
+    }
     byId('pscResume').addEventListener('click', resumeSession);
     byId('pscNewSecret').addEventListener('click', newSecret);
     byId('pscSend').addEventListener('click', sendMessage);

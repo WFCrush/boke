@@ -649,6 +649,7 @@ function setSkillStatus(message, type = 'info') {
 function fillSkillStatus(data) {
   if (!data) return;
   $('skillBaseUrl').value = data.baseUrl || '';
+  $('skillPublicApiBase').value = data.publicApiBase || '';
   $('skillModel').value = data.model || '';
   $('skillName').value = data.skillName || 'xie-xiao-shu';
   $('skillAdminUrl').textContent = data.adminUrl || '-';
@@ -656,7 +657,8 @@ function fillSkillStatus(data) {
   const keyText = data.hasApiKey ? `密钥已设置（${data.apiKeySource || 'unknown'} ${data.maskedApiKey || ''}）` : '未设置 API Key';
   const skillText = data.skillInstalled === false ? 'skill 文件未找到' : 'skill 文件已找到';
   const knowledgeText = data.knowledgeInstalled === false ? '知识库未找到' : '知识库已找到';
-  setSkillStatus(`${keyText}；${skillText}；${knowledgeText}`, data.hasApiKey && data.skillInstalled !== false ? 'success' : 'warn');
+  const publicText = data.publicApiBase ? '公开页面 API 已配置' : '公开页面 API 未配置';
+  setSkillStatus(`${keyText}；${skillText}；${knowledgeText}；${publicText}`, data.hasApiKey && data.skillInstalled !== false ? 'success' : 'warn');
 }
 
 async function loadSkillStatus() {
@@ -674,6 +676,7 @@ async function saveSkillConfig() {
       method: 'PUT',
       body: JSON.stringify({
         baseUrl: $('skillBaseUrl').value,
+        publicApiBase: $('skillPublicApiBase').value,
         apiKey: $('skillApiKey').value,
         model: $('skillModel').value,
         skillName: $('skillName').value,

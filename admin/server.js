@@ -27,6 +27,7 @@ const host = process.env.ADMIN_HOST || '127.0.0.1';
 const passwordFile = path.join(root, '.admin-password');
 const skillChatConfigFile = path.join(root, '.admin-tmp', 'skill-chat-config.json');
 const publicSkillChatDir = path.join(root, 'skill-chat-sessions', 'sessions');
+const publicSkillChatClientConfigFile = path.join(root, 'source', 'js', 'public-skill-chat-config.js');
 let password = process.env.ADMIN_PASSWORD || 'admin123';
 const sessions = new Map();
 const jobs = new Map();
@@ -427,6 +428,7 @@ async function writeSkillChatLocalConfig(input) {
     baseUrl: normalizeBaseUrl(input.baseUrl || current.baseUrl),
     model: String(input.model || current.model || 'gpt-4.1-mini').trim(),
     skillName: normalizeSkillName(input.skillName || current.skillName || 'xie-xiao-shu'),
+    publicApiBase: String(input.publicApiBase || current.publicApiBase || '').trim().replace(/\/+$/, ''),
     updatedAt: new Date().toISOString(),
   };
   if (typeof input.apiKey === 'string' && input.apiKey.trim()) next.apiKey = input.apiKey.trim();
@@ -442,6 +444,7 @@ async function getSkillChatConfig() {
   const baseUrl = normalizeBaseUrl(process.env.SKILL_CHAT_BASE_URL || process.env.OPENAI_BASE_URL || local.baseUrl);
   const model = String(process.env.SKILL_CHAT_MODEL || local.model || 'gpt-4.1-mini').trim();
   const skillName = normalizeSkillName(process.env.SKILL_CHAT_SKILL || local.skillName || 'xie-xiao-shu');
+  const publicApiBase = String(process.env.PUBLIC_SKILL_CHAT_API_BASE || local.publicApiBase || '').trim().replace(/\/+$/, '');
   return {
     baseUrl,
     model,
@@ -450,6 +453,7 @@ async function getSkillChatConfig() {
     hasApiKey: Boolean(apiKey),
     apiKeySource: envKey ? 'env' : (local.apiKey ? 'local' : ''),
     maskedApiKey: redactSecret(apiKey),
+    publicApiBase,
   };
 }
 
@@ -461,9 +465,22 @@ function publicSkillChatConfig(config) {
     hasApiKey: config.hasApiKey,
     apiKeySource: config.apiKeySource,
     maskedApiKey: config.maskedApiKey,
+    publicApiBase: config.publicApiBase,
     adminUrl: `http://127.0.0.1:${port}/`,
     apiUrl: `http://127.0.0.1:${port}/api/skill-chat/chat`,
   };
+}
+
+async function writePublicSkillChatClientConfig(publicApiBase) {
+  await fs.mkdir(path.dirname(publicSkillChatClientConfigFile), { recursive: true });
+  const base = String(publicApiBase || '').trim().replace(/\/+$/, '');
+  const js = [
+    '(function () {',
+    `  window.BOKE_SKILL_CHAT_API_BASE = ${JSON.stringify(base)};`,
+    '}());',
+    '',
+  ].join('\n');
+  await fs.writeFile(publicSkillChatClientConfigFile, js, 'utf8');
 }
 
 async function loadSkillPrompt(skillName) {
@@ -1063,7 +1080,8 @@ app.get('/api/skill-chat/status', auth, async (_req, res) => {
 
 app.put('/api/skill-chat/config', auth, async (req, res) => {
   try {
-    await writeSkillChatLocalConfig(req.body || {});
+    const saved = await writeSkillChatLocalConfig(req.body || {});
+    await writePublicSkillChatClientConfig(saved.publicApiBase);
     const config = await getSkillChatConfig();
     res.json(publicSkillChatConfig(config));
   } catch (error) {

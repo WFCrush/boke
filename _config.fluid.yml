@@ -246,6 +246,7 @@ custom_js:
   - /js/site-enhance.js
   - /js/home-premium.js
   - /js/post-reading-plus.js
+  - /js/public-skill-chat-config.js
   - /js/public-skill-chat.js
 
 # 指定自定义 .css 文件路径，用法和 custom_js 相同
