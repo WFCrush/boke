@@ -12,6 +12,59 @@
 
   function byId(id) { return document.getElementById(id); }
 
+  function mountShell() {
+    root.innerHTML = [
+      '<section class="psc-hero" aria-labelledby="psc-title">',
+      '  <div>',
+      '    <p class="psc-kicker">Skill Dialogue</p>',
+      '    <h1 id="psc-title">对话分析板块</h1>',
+      '    <p class="psc-lead">输入一个只有你知道的会话密钥，系统会保存本次对话；下次使用同一个密钥，可以继续接上。结束时会对整段对话做一次梳理。</p>',
+      '  </div>',
+      '  <div class="psc-status-panel">',
+      '    <span class="psc-status-dot" data-psc-dot></span>',
+      '    <div>',
+      '      <strong data-psc-status-title>等待连接</strong>',
+      '      <span data-psc-status-text>先输入会话密钥。</span>',
+      '    </div>',
+      '  </div>',
+      '</section>',
+      '<section class="psc-console" aria-label="对话控制台">',
+      '  <aside class="psc-control">',
+      '    <details class="psc-advanced">',
+      '      <summary>高级设置</summary>',
+      '      <label class="psc-field">',
+      '        <span>服务地址</span>',
+      '        <input id="pscApiBase" type="url" placeholder="https://your-api.example.com">',
+      '      </label>',
+      '    </details>',
+      '    <label class="psc-field">',
+      '      <span>会话密钥</span>',
+      '      <input id="pscSecret" type="password" autocomplete="off" placeholder="至少 6 个字符">',
+      '    </label>',
+      '    <div class="psc-actions">',
+      '      <button id="pscResume" type="button">载入/继续</button>',
+      '      <button id="pscNewSecret" type="button" class="psc-quiet">生成密钥</button>',
+      '    </div>',
+      '    <div class="psc-session-card">',
+      '      <span>会话状态</span>',
+      '      <strong id="pscSessionState">未载入</strong>',
+      '      <code id="pscSessionId">-</code>',
+      '    </div>',
+      '    <button id="pscEnd" type="button" class="psc-danger">结束对话并分析</button>',
+      '    <p class="psc-note">会话密钥不是账号密码，只用于定位你的对话记录。请自行保存；丢失后无法恢复同一段对话。</p>',
+      '  </aside>',
+      '  <div class="psc-chat" role="main" aria-label="Skill 对话窗口">',
+      '    <div id="pscMessages" class="psc-messages" aria-live="polite"></div>',
+      '    <div id="pscSummary" class="psc-summary" hidden></div>',
+      '    <div class="psc-composer">',
+      '      <textarea id="pscInput" rows="4" placeholder="写下你想分析的关系、梦境、困惑或一句卡住你的话..." disabled></textarea>',
+      '      <button id="pscSend" type="button" disabled>发送</button>',
+      '    </div>',
+      '  </div>',
+      '</section>'
+    ].join('');
+  }
+
   function apiBase() {
     var input = byId('pscApiBase');
     var configured = input && input.value.trim();
@@ -54,10 +107,14 @@
 
   function setBusy(busy) {
     state.busy = busy;
-    byId('pscSend').disabled = busy || !state.session || state.session.status === 'ended';
-    byId('pscInput').disabled = busy || !state.session || state.session.status === 'ended';
-    byId('pscResume').disabled = busy;
-    byId('pscEnd').disabled = busy || !state.session || state.session.status === 'ended';
+    var send = byId('pscSend');
+    var input = byId('pscInput');
+    var resume = byId('pscResume');
+    var end = byId('pscEnd');
+    if (send) send.disabled = busy || !state.session || state.session.status === 'ended';
+    if (input) input.disabled = busy || !state.session || state.session.status === 'ended';
+    if (resume) resume.disabled = busy;
+    if (end) end.disabled = busy || !state.session || state.session.status === 'ended';
   }
 
   async function request(path, body) {
@@ -186,6 +243,7 @@
   }
 
   function init() {
+    mountShell();
     var savedBase = localStorage.getItem('bokeSkillChatApiBase') || root.getAttribute('data-api-base') || window.BOKE_SKILL_CHAT_API_BASE || '';
     byId('pscApiBase').value = savedBase || window.location.origin;
     byId('pscResume').addEventListener('click', resumeSession);
