@@ -77,8 +77,15 @@ async function api(url, options = {}) {
   } catch (error) {
     throw new Error(friendlyNetworkError(error));
   }
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || '操作失败');
+  const raw = await res.text().catch(() => '');
+  let data = {};
+  try { data = raw ? JSON.parse(raw) : {}; } catch (_) { data = { raw }; }
+  if (!res.ok) {
+    if (res.status === 404 && raw.includes('Cannot')) {
+      throw new Error('后台服务版本不匹配，请重启博客后台服务后再试');
+    }
+    throw new Error(data.error || data.raw || `操作失败（HTTP ${res.status}）`);
+  }
   return data;
 }
 
@@ -672,11 +679,15 @@ async function loadSkillStatus() {
 
 async function saveSkillConfig() {
   try {
+    const publicApiBase = $('skillPublicApiBase').value.trim().replace(/\/+$/, '');
+    if (/\/v1$/i.test(publicApiBase)) {
+      throw new Error('公开页面 API 地址不能填模型接口 /v1，请填你部署的 Node 后端根地址，或先留空');
+    }
     const data = await api('/api/skill-chat/config', {
       method: 'PUT',
       body: JSON.stringify({
         baseUrl: $('skillBaseUrl').value,
-        publicApiBase: $('skillPublicApiBase').value,
+        publicApiBase,
         apiKey: $('skillApiKey').value,
         model: $('skillModel').value,
         skillName: $('skillName').value,

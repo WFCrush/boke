@@ -423,14 +423,18 @@ async function readSkillChatLocalConfig() {
 async function writeSkillChatLocalConfig(input) {
   await fs.mkdir(path.dirname(skillChatConfigFile), { recursive: true });
   const current = await readSkillChatLocalConfig();
+  const hasPublicApiBase = Object.prototype.hasOwnProperty.call(input, 'publicApiBase');
   const next = {
     ...current,
     baseUrl: normalizeBaseUrl(input.baseUrl || current.baseUrl),
     model: String(input.model || current.model || 'gpt-4.1-mini').trim(),
     skillName: normalizeSkillName(input.skillName || current.skillName || 'xie-xiao-shu'),
-    publicApiBase: String(input.publicApiBase || current.publicApiBase || '').trim().replace(/\/+$/, ''),
+    publicApiBase: String(hasPublicApiBase ? input.publicApiBase : (current.publicApiBase || '')).trim().replace(/\/+$/, ''),
     updatedAt: new Date().toISOString(),
   };
+  if (/\/v1$/i.test(next.publicApiBase)) {
+    throw new Error('公开页面 API 地址不能填模型接口 /v1，请填部署后的 Node 后端根地址，或先留空');
+  }
   if (typeof input.apiKey === 'string' && input.apiKey.trim()) next.apiKey = input.apiKey.trim();
   if (input.clearApiKey) delete next.apiKey;
   await fs.writeFile(skillChatConfigFile, JSON.stringify(next, null, 2), 'utf8');
