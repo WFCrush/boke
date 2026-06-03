@@ -244,11 +244,15 @@ custom_head: '
 custom_js:
   - /js/contact-widget.js
   - /js/site-enhance.js
+  - /js/home-premium.js
+  - /js/post-reading-plus.js
 
 # 指定自定义 .css 文件路径，用法和 custom_js 相同
 # The usage is the same as custom_js
 custom_css:
   - /css/blog-custom.css
+  - /css/home-premium.css
+  - /css/post-reading-plus.css
 
 # 网页访问统计
 # Analysis of website visitors
