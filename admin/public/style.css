@@ -531,6 +531,135 @@ kbd {
 .stat-row span { color: var(--muted); font-size: 0.9rem; }
 .stat-row strong { font-size: 1.05rem; }
 
+/* ========== Skill 对话 ========== */
+.skill-chat-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 390px) minmax(0, 1fr);
+  gap: 1.2rem;
+  height: 100%;
+  padding: 1.2rem;
+}
+.skill-chat-sidebar,
+.skill-chat-main { min-height: 0; }
+.skill-chat-card,
+.skill-chat-main { margin: 0; }
+.skill-chat-card {
+  height: 100%;
+  overflow: auto;
+}
+.skill-model-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+}
+.skill-actions {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+.skill-status {
+  margin-top: 1rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text-2);
+  font-size: 0.88rem;
+}
+.skill-status-success { border-color: rgba(22, 163, 74, 0.35); color: var(--success); }
+.skill-status-warn { border-color: rgba(217, 119, 6, 0.35); color: var(--warning); }
+.skill-status-error { border-color: rgba(220, 38, 38, 0.35); color: var(--danger); }
+.skill-url-box {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 1rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.skill-url-box code {
+  display: block;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel-2);
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: auto;
+}
+.skill-chat-main {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 1rem;
+  overflow: hidden;
+}
+.skill-chat-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+.skill-messages {
+  min-height: 320px;
+  overflow: auto;
+  display: grid;
+  align-content: start;
+  gap: 0.8rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+}
+.skill-empty {
+  min-height: 260px;
+  display: grid;
+  place-content: center;
+  gap: 0.35rem;
+  text-align: center;
+  color: var(--muted);
+}
+.skill-empty strong { color: var(--text); font-size: 1rem; }
+.skill-message {
+  display: grid;
+  gap: 0.35rem;
+  max-width: min(820px, 92%);
+}
+.skill-message-user { justify-self: end; }
+.skill-message-assistant { justify-self: start; }
+.skill-message-role {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.skill-message-body {
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  color: var(--text);
+  line-height: 1.75;
+  word-break: break-word;
+}
+.skill-message-user .skill-message-body {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.skill-message-body > :first-child { margin-top: 0; }
+.skill-message-body > :last-child { margin-bottom: 0; }
+.skill-composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.7rem;
+  align-items: end;
+}
+.skill-composer textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+.skill-composer button {
+  min-width: 96px;
+  min-height: 3rem;
+}
+
 /* ========== Toast 通知 ========== */
 .toast-container {
   position: fixed;
@@ -619,11 +748,18 @@ kbd {
   .edit-area textarea.half, .md-preview.half { max-width: 100%; }
   .edit-area { flex-direction: column; }
   .md-preview { border-left: none; border-top: 1px solid var(--line); }
+  .skill-chat-layout { grid-template-columns: 1fr; height: auto; }
+  .skill-chat-card { height: auto; }
 }
 @media (max-width: 640px) {
   .topbar-left .nav-tab { padding: 0.4rem 0.5rem; font-size: 0.85rem; }
   .brand-name, .brand-sep { display: none; }
   .meta-row { grid-template-columns: 1fr; }
+  .skill-chat-layout { padding: 0.85rem; }
+  .skill-model-row,
+  .skill-composer { grid-template-columns: 1fr; }
+  .skill-chat-head { display: grid; }
+  .skill-message { max-width: 100%; }
 }
 
 /* ========== 现代化 UI 覆盖层 ========== */

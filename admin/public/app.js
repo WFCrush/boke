@@ -6,6 +6,8 @@ let allPosts = [];
 let taxonomy = { categories: [], tags: [] };
 let isDirty = false;
 let autosaveTimer = null;
+let skillMessages = [];
+let skillBusy = false;
 
 const $ = (id) => document.getElementById(id);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -613,6 +615,144 @@ async function saveContact() {
   }
 }
 
+// ===== Skill 对话 =====
+function renderSkillMessages() {
+  const box = $('skillMessages');
+  if (!box) return;
+  if (!skillMessages.length) {
+    box.innerHTML = '<div class="skill-empty"><strong>还没有对话</strong><span>先测试连接，再发送一段关系、梦境或卡住你的话。</span></div>';
+    return;
+  }
+  box.innerHTML = skillMessages.map((message) => {
+    const roleText = message.role === 'user' ? '你' : 'Skill';
+    const body = message.role === 'assistant' && window.marked
+      ? marked.parse(message.content || '')
+      : escapeHtml(message.content || '').replace(/\n/g, '<br>');
+    return `<article class="skill-message skill-message-${message.role}"><div class="skill-message-role">${roleText}</div><div class="skill-message-body">${body}</div></article>`;
+  }).join('');
+  box.scrollTop = box.scrollHeight;
+}
+
+function setSkillBusy(busy) {
+  skillBusy = busy;
+  if ($('sendSkillPrompt')) $('sendSkillPrompt').disabled = busy;
+  if ($('skillPrompt')) $('skillPrompt').disabled = busy;
+}
+
+function setSkillStatus(message, type = 'info') {
+  const el = $('skillStatus');
+  if (!el) return;
+  el.textContent = message;
+  el.className = `skill-status skill-status-${type}`;
+}
+
+function fillSkillStatus(data) {
+  if (!data) return;
+  $('skillBaseUrl').value = data.baseUrl || '';
+  $('skillModel').value = data.model || '';
+  $('skillName').value = data.skillName || 'xie-xiao-shu';
+  $('skillAdminUrl').textContent = data.adminUrl || '-';
+  $('skillApiUrl').textContent = data.apiUrl || '-';
+  const keyText = data.hasApiKey ? `密钥已设置（${data.apiKeySource || 'unknown'} ${data.maskedApiKey || ''}）` : '未设置 API Key';
+  const skillText = data.skillInstalled === false ? 'skill 文件未找到' : 'skill 文件已找到';
+  const knowledgeText = data.knowledgeInstalled === false ? '知识库未找到' : '知识库已找到';
+  setSkillStatus(`${keyText}；${skillText}；${knowledgeText}`, data.hasApiKey && data.skillInstalled !== false ? 'success' : 'warn');
+}
+
+async function loadSkillStatus() {
+  try {
+    const data = await api('/api/skill-chat/status');
+    fillSkillStatus(data);
+  } catch (error) {
+    setSkillStatus(`读取配置失败：${error.message}`, 'error');
+  }
+}
+
+async function saveSkillConfig() {
+  try {
+    const data = await api('/api/skill-chat/config', {
+      method: 'PUT',
+      body: JSON.stringify({
+        baseUrl: $('skillBaseUrl').value,
+        apiKey: $('skillApiKey').value,
+        model: $('skillModel').value,
+        skillName: $('skillName').value,
+      }),
+    });
+    $('skillApiKey').value = '';
+    fillSkillStatus(data);
+    await loadSkillStatus();
+    toast('Skill 对话配置已保存', 'success');
+  } catch (error) {
+    toast(`保存配置失败：${error.message}`, 'error');
+  }
+}
+
+async function loadSkillModels() {
+  try {
+    setSkillStatus('正在获取模型列表...', 'info');
+    const data = await api('/api/skill-chat/models');
+    $('skillModelList').innerHTML = (data.models || []).map((model) => `<option value="${escapeHtml(model)}">`).join('');
+    if (!$('skillModel').value && data.selected) $('skillModel').value = data.selected;
+    setSkillStatus(`获取模型成功：${(data.models || []).length} 个模型`, 'success');
+    toast('模型列表已更新', 'success');
+  } catch (error) {
+    setSkillStatus(`获取模型失败：${error.message}`, 'error');
+    toast(`获取模型失败：${error.message}`, 'error');
+  }
+}
+
+async function testSkillConnection() {
+  try {
+    setSkillStatus('正在测试连接...', 'info');
+    const data = await api('/api/skill-chat/test', { method: 'POST', body: '{}' });
+    $('skillApiUrl').textContent = data.apiUrl || $('skillApiUrl').textContent;
+    setSkillStatus(`${data.message}；当前模型 ${data.selected}；可用模型 ${data.modelCount} 个`, 'success');
+    toast('Skill 对话连接成功', 'success');
+  } catch (error) {
+    setSkillStatus(`连接失败：${error.message}`, 'error');
+    toast(`连接失败：${error.message}`, 'error');
+  }
+}
+
+async function sendSkillPrompt() {
+  const prompt = $('skillPrompt').value.trim();
+  if (!prompt || skillBusy) return;
+  skillMessages.push({ role: 'user', content: prompt });
+  $('skillPrompt').value = '';
+  renderSkillMessages();
+  setSkillBusy(true);
+  skillMessages.push({ role: 'assistant', content: '正在分析...' });
+  renderSkillMessages();
+  try {
+    const payloadMessages = skillMessages
+      .filter((item) => item.content !== '正在分析...')
+      .map(({ role, content }) => ({ role, content }));
+    const reply = await api('/api/skill-chat/chat', {
+      method: 'POST',
+      body: JSON.stringify({
+        model: $('skillModel').value,
+        skillName: $('skillName').value,
+        messages: payloadMessages,
+      }),
+    });
+    skillMessages[skillMessages.length - 1] = { role: 'assistant', content: reply.content || '' };
+    renderSkillMessages();
+  } catch (error) {
+    skillMessages[skillMessages.length - 1] = { role: 'assistant', content: `出错了：${error.message}` };
+    renderSkillMessages();
+    toast(`发送失败：${error.message}`, 'error');
+  } finally {
+    setSkillBusy(false);
+    $('skillPrompt').focus();
+  }
+}
+
+function clearSkillChat() {
+  skillMessages = [];
+  renderSkillMessages();
+}
+
 // ===== 发布 =====
 async function startPublish() {
   if (isDirty || !currentFile) {
@@ -656,6 +796,7 @@ function switchTab(tab) {
   $$('.nav-tab').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
   $$('.tab-panel').forEach((p) => p.classList.toggle('active', p.dataset.panel === tab));
   if (tab === 'site') loadSiteConfig();
+  if (tab === 'skill-chat') { loadSkillStatus(); renderSkillMessages(); }
   if (tab === 'more') { loadContact(); loadTrash(); }
   if (tab === 'posts') renderPostTable();
 }
@@ -760,6 +901,20 @@ function bindEvents() {
   $('saveContact').onclick = saveContact;
   $('reloadTrash').onclick = loadTrash;
 
+  // Skill 对话
+  $('saveSkillConfig').onclick = saveSkillConfig;
+  $('loadSkillModels').onclick = loadSkillModels;
+  $('testSkillConnection').onclick = testSkillConnection;
+  $('sendSkillPrompt').onclick = sendSkillPrompt;
+  $('clearSkillChat').onclick = clearSkillChat;
+  $('skillPrompt').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      sendSkillPrompt();
+    }
+  });
+
   // 文件上传
   $('fileInput').onchange = () => {
     const [file] = $('fileInput').files;
@@ -826,6 +981,7 @@ function bindEvents() {
 
   // 全局快捷键
   window.addEventListener('keydown', (e) => {
+    if (currentTab === 'skill-chat') return;
     const ctrl = e.ctrlKey || e.metaKey;
     if (!ctrl) return;
     if (e.key === 's' || e.key === 'S') { e.preventDefault(); savePost(); }
@@ -848,6 +1004,8 @@ async function afterLogin() {
   $('app').classList.remove('hidden');
   await loadPosts();
   await loadTaxonomy();
+  await loadSkillStatus();
+  renderSkillMessages();
   newPost();
   await tryRestoreDraft();
 }

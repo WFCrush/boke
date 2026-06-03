@@ -246,6 +246,7 @@ custom_js:
   - /js/site-enhance.js
   - /js/home-premium.js
   - /js/post-reading-plus.js
+  - /js/public-skill-chat.js
 
 # 指定自定义 .css 文件路径，用法和 custom_js 相同
 # The usage is the same as custom_js
@@ -253,6 +254,7 @@ custom_css:
   - /css/blog-custom.css
   - /css/home-premium.css
   - /css/post-reading-plus.css
+  - /css/public-skill-chat.css
 
 # 网页访问统计
 # Analysis of website visitors
@@ -402,6 +404,7 @@ navbar:
       { key: "分类", link: "/categories/", icon: "iconfont icon-category-fill" },
       { key: "标签", link: "/tags/", icon: "iconfont icon-tags-fill" }
     ] }
+    - { key: "对话分析", link: "/skill-chat/", icon: "iconfont icon-comment" }
     - { key: "about", link: "/about/", icon: "iconfont icon-user-fill" }
     #- { key: "links", link: "/links/", icon: "iconfont icon-link-fill" }
 

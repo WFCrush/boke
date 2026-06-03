@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const { execFile, spawn } = require('child_process');
 const fs = require('fs/promises');
 const fss = require('fs');
+const os = require('os');
 const path = require('path');
 
 const express = require('express');
@@ -22,16 +23,21 @@ const publicDir = path.join(__dirname, 'public');
 const hexoConfig = path.join(root, '_config.yml');
 const publishDir = path.join(root, 'public');
 const port = Number(process.env.ADMIN_PORT || 5050);
+const host = process.env.ADMIN_HOST || '127.0.0.1';
 const passwordFile = path.join(root, '.admin-password');
+const skillChatConfigFile = path.join(root, '.admin-tmp', 'skill-chat-config.json');
+const publicSkillChatDir = path.join(root, 'skill-chat-sessions', 'sessions');
 let password = process.env.ADMIN_PASSWORD || 'admin123';
 const sessions = new Map();
 const jobs = new Map();
+const publicSkillChatRate = new Map();
 
 const app = express();
 
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 app.use(express.json({ limit: '2mb' }));
+app.use(assertAdminStatic);
 app.use(express.static(publicDir));
 
 const upload = multer({
@@ -108,13 +114,65 @@ async function getSiteRoot() {
   }
 }
 
-function assertLocal(req, res, next) {
+function isLocalRequest(req) {
   const ip = req.ip || req.socket.remoteAddress || '';
-  if (ip.includes('127.0.0.1') || ip.includes('::1') || ip === '::ffff:127.0.0.1') {
+  return ip.includes('127.0.0.1') || ip.includes('::1') || ip === '::ffff:127.0.0.1';
+}
+
+function assertAdminStatic(req, res, next) {
+  if (req.path.startsWith('/api/')) {
+    next();
+    return;
+  }
+  if (isLocalRequest(req)) {
+    next();
+    return;
+  }
+  res.status(403).send('Admin UI is only available from localhost.');
+}
+
+function assertLocal(req, res, next) {
+  if (req.path.startsWith('/api/public-skill-chat/')) {
+    next();
+    return;
+  }
+  if (isLocalRequest(req)) {
     next();
     return;
   }
   res.status(403).json({ error: '后台只允许本机访问' });
+}
+
+function publicSkillChatAccess(req, res, next) {
+  if (!req.path.startsWith('/api/public-skill-chat/')) {
+    next();
+    return;
+  }
+  const allowedOrigin = process.env.PUBLIC_SKILL_CHAT_ORIGIN || '*';
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Vary', 'Origin');
+  if (req.method === 'OPTIONS') {
+    res.status(204).end();
+    return;
+  }
+  const limit = Number(process.env.PUBLIC_SKILL_CHAT_RATE_LIMIT || 60);
+  const windowMs = 60 * 60 * 1000;
+  const key = req.ip || req.socket.remoteAddress || 'unknown';
+  const now = Date.now();
+  const current = publicSkillChatRate.get(key);
+  if (!current || current.resetAt <= now) {
+    publicSkillChatRate.set(key, { count: 1, resetAt: now + windowMs });
+    next();
+    return;
+  }
+  if (current.count >= limit) {
+    res.status(429).json({ error: '请求过于频繁，请稍后再试' });
+    return;
+  }
+  current.count += 1;
+  next();
 }
 
 function auth(req, res, next) {
@@ -325,6 +383,301 @@ async function importZipPackage(filePath, originalName) {
 
   parsed.content = content;
   return importMarkdownText(matter.stringify(parsed.content, parsed.data), path.basename(markdownEntryName), path.extname(markdownEntryName).toLowerCase());
+}
+
+function defaultCodexHome() {
+  return process.env.CODEX_HOME || path.join(os.homedir(), '.codex');
+}
+
+function normalizeSkillName(value) {
+  const name = String(value || 'xie-xiao-shu').trim();
+  if (!/^[a-zA-Z0-9_.-]+$/.test(name) || name.includes('..')) return 'xie-xiao-shu';
+  return name;
+}
+
+function skillRootPath(skillName = 'xie-xiao-shu') {
+  return path.join(defaultCodexHome(), 'skills', normalizeSkillName(skillName));
+}
+
+function redactSecret(value) {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  if (text.length <= 8) return '********';
+  return `${text.slice(0, 4)}...${text.slice(-4)}`;
+}
+
+function normalizeBaseUrl(value) {
+  const raw = String(value || '').trim().replace(/\/+$/, '');
+  return raw || 'https://api.openai.com/v1';
+}
+
+async function readSkillChatLocalConfig() {
+  try {
+    return JSON.parse(await fs.readFile(skillChatConfigFile, 'utf8'));
+  } catch (_) {
+    return {};
+  }
+}
+
+async function writeSkillChatLocalConfig(input) {
+  await fs.mkdir(path.dirname(skillChatConfigFile), { recursive: true });
+  const current = await readSkillChatLocalConfig();
+  const next = {
+    ...current,
+    baseUrl: normalizeBaseUrl(input.baseUrl || current.baseUrl),
+    model: String(input.model || current.model || 'gpt-4.1-mini').trim(),
+    skillName: normalizeSkillName(input.skillName || current.skillName || 'xie-xiao-shu'),
+    updatedAt: new Date().toISOString(),
+  };
+  if (typeof input.apiKey === 'string' && input.apiKey.trim()) next.apiKey = input.apiKey.trim();
+  if (input.clearApiKey) delete next.apiKey;
+  await fs.writeFile(skillChatConfigFile, JSON.stringify(next, null, 2), 'utf8');
+  return next;
+}
+
+async function getSkillChatConfig() {
+  const local = await readSkillChatLocalConfig();
+  const envKey = process.env.SKILL_CHAT_API_KEY || process.env.OPENAI_API_KEY || '';
+  const apiKey = envKey || local.apiKey || '';
+  const baseUrl = normalizeBaseUrl(process.env.SKILL_CHAT_BASE_URL || process.env.OPENAI_BASE_URL || local.baseUrl);
+  const model = String(process.env.SKILL_CHAT_MODEL || local.model || 'gpt-4.1-mini').trim();
+  const skillName = normalizeSkillName(process.env.SKILL_CHAT_SKILL || local.skillName || 'xie-xiao-shu');
+  return {
+    baseUrl,
+    model,
+    skillName,
+    apiKey,
+    hasApiKey: Boolean(apiKey),
+    apiKeySource: envKey ? 'env' : (local.apiKey ? 'local' : ''),
+    maskedApiKey: redactSecret(apiKey),
+  };
+}
+
+function publicSkillChatConfig(config) {
+  return {
+    baseUrl: config.baseUrl,
+    model: config.model,
+    skillName: config.skillName,
+    hasApiKey: config.hasApiKey,
+    apiKeySource: config.apiKeySource,
+    maskedApiKey: config.maskedApiKey,
+    adminUrl: `http://127.0.0.1:${port}/`,
+    apiUrl: `http://127.0.0.1:${port}/api/skill-chat/chat`,
+  };
+}
+
+async function loadSkillPrompt(skillName) {
+  const dir = skillRootPath(skillName);
+  const skillFile = path.join(dir, 'SKILL.md');
+  const knowledgeFile = path.join(dir, '知识库.txt');
+  const parts = [];
+  try {
+    const raw = await fs.readFile(skillFile, 'utf8');
+    parts.push(raw.slice(0, 14000));
+  } catch (_) {}
+  try {
+    const raw = await fs.readFile(knowledgeFile, 'utf8');
+    const lines = raw.split(/\r?\n/);
+    const selected = [
+      ...lines.slice(0, 110),
+      ...lines.slice(178, 240),
+      ...lines.slice(638, 724),
+    ];
+    parts.push(selected.join('\n').slice(0, 14000));
+  } catch (_) {}
+
+  return [
+    `你正在作为 Codex 后台里的可视化 skill 对话助手运行，当前 skill: ${skillName}。`,
+    '默认使用简体中文。回答要直接、克制、有洞察，但不能冒充持牌心理咨询或医疗诊断。',
+    '用户如果表达自伤、自杀或现实危机，立即停止分析，建议联系当地紧急服务或危机热线。',
+    '如果用户在关系、梦境、依恋、边界、客体关系等主题上求助，优先使用下方 skill 材料里的框架。',
+    '不要编造“原话”。只有材料里出现过的原话才可标成原话；否则说“基于这个框架”。',
+    '当前是网页聊天场景，输出适合直接显示的 Markdown。',
+    parts.join('\n\n'),
+  ].filter(Boolean).join('\n\n').slice(0, 30000);
+}
+
+function safeMessages(messages) {
+  if (!Array.isArray(messages)) return [];
+  return messages
+    .filter((item) => item && (item.role === 'user' || item.role === 'assistant'))
+    .slice(-20)
+    .map((item) => ({
+      role: item.role,
+      content: String(item.content || '').slice(0, 12000),
+    }))
+    .filter((item) => item.content.trim());
+}
+
+async function openAIRequest(config, endpoint, options = {}) {
+  if (!config.apiKey) throw new Error('Skill 对话 API Key 未设置');
+  const url = `${normalizeBaseUrl(config.baseUrl)}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+  const response = await fetch(url, {
+    method: options.method || 'GET',
+    headers: {
+      Authorization: `Bearer ${config.apiKey}`,
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+    },
+    body: options.body ? JSON.stringify(options.body) : undefined,
+  });
+  const text = await response.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch (_) { data = { raw: text }; }
+  if (!response.ok) {
+    const detail = data && data.error ? (data.error.message || JSON.stringify(data.error)) : text;
+    throw new Error(detail || `HTTP ${response.status}`);
+  }
+  return data;
+}
+
+async function listSkillChatModels(config) {
+  const data = await openAIRequest(config, '/models');
+  return (data.data || [])
+    .map((model) => model.id)
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b));
+}
+
+async function runSkillChatCompletion(config, messages) {
+  const systemPrompt = await loadSkillPrompt(config.skillName);
+  const payload = {
+    model: config.model,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      ...safeMessages(messages),
+    ],
+    temperature: 0.7,
+  };
+  const data = await openAIRequest(config, '/chat/completions', { method: 'POST', body: payload });
+  const content = data && data.choices && data.choices[0] && data.choices[0].message
+    ? data.choices[0].message.content
+    : '';
+  if (!content) throw new Error('模型没有返回可显示的内容');
+  return {
+    role: 'assistant',
+    content,
+    model: data.model || config.model,
+    usage: data.usage || null,
+  };
+}
+
+function publicChatIdFromSecret(secret) {
+  return crypto.createHash('sha256').update(String(secret || '').trim()).digest('hex').slice(0, 24);
+}
+
+function publicChatFile(id, ext) {
+  return path.join(publicSkillChatDir, `${id}.${ext}`);
+}
+
+function validatePublicSecret(secret) {
+  const text = String(secret || '').trim();
+  if (text.length < 6) throw new Error('会话密钥至少需要 6 个字符');
+  if (text.length > 120) throw new Error('会话密钥过长');
+  return text;
+}
+
+function publicChatMarkdown(session) {
+  const lines = [
+    '---',
+    `id: ${session.id}`,
+    `title: ${session.title || 'Skill 对话记录'}`,
+    `status: ${session.status}`,
+    `createdAt: ${session.createdAt}`,
+    `updatedAt: ${session.updatedAt}`,
+    `endedAt: ${session.endedAt || ''}`,
+    `messageCount: ${session.messages.length}`,
+    '---',
+    '',
+    `# ${session.title || 'Skill 对话记录'}`,
+    '',
+    `- 会话 ID：${session.id}`,
+    `- 状态：${session.status}`,
+    `- 创建时间：${session.createdAt}`,
+    `- 更新时间：${session.updatedAt}`,
+    '',
+  ];
+  if (session.summary) {
+    lines.push('## 结束分析', '', session.summary.trim(), '');
+  }
+  lines.push('## 对话记录', '');
+  session.messages.forEach((message, index) => {
+    lines.push(`### ${index + 1}. ${message.role === 'user' ? '用户' : 'Skill'}`);
+    lines.push('');
+    lines.push(String(message.content || '').trim() || '(空)');
+    lines.push('');
+  });
+  return `${lines.join('\n')}\n`;
+}
+
+async function savePublicChatSession(session) {
+  await fs.mkdir(publicSkillChatDir, { recursive: true });
+  await fs.writeFile(publicChatFile(session.id, 'json'), `${JSON.stringify(session, null, 2)}\n`, 'utf8');
+  await fs.writeFile(publicChatFile(session.id, 'md'), publicChatMarkdown(session), 'utf8');
+}
+
+async function loadPublicChatSession(secret) {
+  const normalizedSecret = validatePublicSecret(secret);
+  const id = publicChatIdFromSecret(normalizedSecret);
+  try {
+    const session = JSON.parse(await fs.readFile(publicChatFile(id, 'json'), 'utf8'));
+    return session;
+  } catch (_) {
+    const now = new Date().toISOString();
+    return {
+      id,
+      title: 'Skill 对话记录',
+      status: 'active',
+      createdAt: now,
+      updatedAt: now,
+      endedAt: '',
+      secretHash: crypto.createHash('sha256').update(normalizedSecret).digest('hex'),
+      messages: [],
+      summary: '',
+    };
+  }
+}
+
+function publicSessionView(session) {
+  return {
+    id: session.id,
+    title: session.title,
+    status: session.status,
+    createdAt: session.createdAt,
+    updatedAt: session.updatedAt,
+    endedAt: session.endedAt,
+    messages: session.messages,
+    summary: session.summary || '',
+  };
+}
+
+function titleFromMessage(message) {
+  const text = String(message || '').replace(/\s+/g, ' ').trim();
+  if (!text) return 'Skill 对话记录';
+  return text.length > 28 ? `${text.slice(0, 28)}...` : text;
+}
+
+async function runPublicSkillChat(messages) {
+  const config = await getSkillChatConfig();
+  return runSkillChatCompletion(config, messages);
+}
+
+async function runPublicSkillSummary(messages) {
+  const summaryPrompt = [
+    '请对以上完整对话做一次结束分析梳理。',
+    '输出结构：',
+    '1. 核心主题',
+    '2. 反复出现的关系/情绪模式',
+    '3. 可能被激活的边界、依恋或客体关系线索',
+    '4. 可以继续观察的具体问题',
+    '5. 一段克制的收束语',
+    '不要诊断，不要吓人，不要承诺疗效。',
+  ].join('\n');
+  const reply = await runPublicSkillChat([
+    ...messages,
+    { role: 'user', content: summaryPrompt },
+  ]);
+  return reply.content;
 }
 
 function formatYamlValue(value) {
@@ -672,6 +1025,7 @@ async function makePreview(inputPath, ext, base, originalName) {
   return null;
 }
 
+app.use(publicSkillChatAccess);
 app.use(assertLocal);
 
 app.get('/api/ping', (_req, res) => {
@@ -686,6 +1040,123 @@ app.post('/api/login', (req, res) => {
   const token = crypto.randomBytes(24).toString('hex');
   sessions.set(token, Date.now());
   res.json({ token });
+});
+
+app.get('/api/skill-chat/status', auth, async (_req, res) => {
+  try {
+    const config = await getSkillChatConfig();
+    const skillDir = skillRootPath(config.skillName);
+    let skillInstalled = false;
+    let knowledgeInstalled = false;
+    try { await fs.access(path.join(skillDir, 'SKILL.md')); skillInstalled = true; } catch (_) {}
+    try { await fs.access(path.join(skillDir, '知识库.txt')); knowledgeInstalled = true; } catch (_) {}
+    res.json({
+      ...publicSkillChatConfig(config),
+      skillDir,
+      skillInstalled,
+      knowledgeInstalled,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/skill-chat/config', auth, async (req, res) => {
+  try {
+    await writeSkillChatLocalConfig(req.body || {});
+    const config = await getSkillChatConfig();
+    res.json(publicSkillChatConfig(config));
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/skill-chat/models', auth, async (_req, res) => {
+  try {
+    const config = await getSkillChatConfig();
+    const models = await listSkillChatModels(config);
+    res.json({ models, selected: config.model, baseUrl: config.baseUrl });
+  } catch (error) {
+    res.status(502).json({ error: error.message });
+  }
+});
+
+app.post('/api/skill-chat/test', auth, async (_req, res) => {
+  try {
+    const config = await getSkillChatConfig();
+    const models = await listSkillChatModels(config);
+    res.json({
+      ok: true,
+      message: 'Skill 对话接口连接成功',
+      modelCount: models.length,
+      selected: config.model,
+      baseUrl: config.baseUrl,
+      apiUrl: publicSkillChatConfig(config).apiUrl,
+    });
+  } catch (error) {
+    res.status(502).json({ error: error.message });
+  }
+});
+
+app.post('/api/skill-chat/chat', auth, async (req, res) => {
+  try {
+    const config = await getSkillChatConfig();
+    if (req.body && req.body.model) config.model = String(req.body.model).trim();
+    if (req.body && req.body.skillName) config.skillName = normalizeSkillName(req.body.skillName);
+    const reply = await runSkillChatCompletion(config, req.body && req.body.messages);
+    res.json(reply);
+  } catch (error) {
+    res.status(502).json({ error: error.message });
+  }
+});
+
+app.post('/api/public-skill-chat/session', async (req, res) => {
+  try {
+    const session = await loadPublicChatSession(req.body && req.body.secret);
+    await savePublicChatSession(session);
+    res.json(publicSessionView(session));
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.post('/api/public-skill-chat/message', async (req, res) => {
+  try {
+    const content = String((req.body && req.body.message) || '').trim();
+    if (!content) throw new Error('消息不能为空');
+    if (content.length > 8000) throw new Error('单条消息过长');
+    const session = await loadPublicChatSession(req.body && req.body.secret);
+    if (session.status === 'ended') throw new Error('这段对话已经结束，请换一个会话密钥开始新的对话');
+    const now = new Date().toISOString();
+    session.messages.push({ role: 'user', content, createdAt: now });
+    if (session.messages.length === 1) session.title = titleFromMessage(content);
+    const reply = await runPublicSkillChat(session.messages.map(({ role, content: text }) => ({ role, content: text })));
+    session.messages.push({ role: 'assistant', content: reply.content, createdAt: new Date().toISOString(), model: reply.model, usage: reply.usage });
+    session.updatedAt = new Date().toISOString();
+    await savePublicChatSession(session);
+    res.json({ session: publicSessionView(session), reply: { role: 'assistant', content: reply.content } });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.post('/api/public-skill-chat/end', async (req, res) => {
+  try {
+    const session = await loadPublicChatSession(req.body && req.body.secret);
+    if (!session.messages.length) throw new Error('还没有可分析的对话');
+    if (session.status !== 'ended' || !session.summary) {
+      const summary = await runPublicSkillSummary(session.messages.map(({ role, content }) => ({ role, content })));
+      const now = new Date().toISOString();
+      session.summary = summary;
+      session.status = 'ended';
+      session.endedAt = now;
+      session.updatedAt = now;
+      await savePublicChatSession(session);
+    }
+    res.json(publicSessionView(session));
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
 });
 
 app.get('/api/posts', auth, async (_req, res) => {
@@ -1029,7 +1500,7 @@ app.get('/api/jobs/:id', auth, (req, res) => {
   res.json(job);
 });
 
-app.listen(port, '127.0.0.1', async () => {
+app.listen(port, host, async () => {
   await ensureDirs();
   try {
     const filePassword = (await fs.readFile(passwordFile, 'utf8')).trim();
@@ -1037,6 +1508,6 @@ app.listen(port, '127.0.0.1', async () => {
   } catch (_) {
     // Use the default or environment password when no local password file exists.
   }
-  console.log(`博客管理员后台已启动：http://127.0.0.1:${port}`);
+  console.log(`博客管理员后台已启动：http://${host}:${port}`);
   console.log(`默认密码：${password}`);
 });

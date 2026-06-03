@@ -31,6 +31,7 @@
           <button class="nav-tab active" data-tab="editor">✍️ 写作</button>
           <button class="nav-tab" data-tab="posts">📚 文章管理</button>
           <button class="nav-tab" data-tab="site">🎨 主页设置</button>
+          <button class="nav-tab" data-tab="skill-chat">Skill 对话</button>
           <button class="nav-tab" data-tab="more">⚙️ 更多</button>
         </div>
         <div class="topbar-right">
@@ -240,7 +241,70 @@
         </div>
       </section>
 
-      <!-- TAB 4：更多 -->
+      <!-- TAB 4：Skill 对话 -->
+      <section class="tab-panel" data-panel="skill-chat">
+        <div class="skill-chat-layout">
+          <aside class="skill-chat-sidebar">
+            <div class="card skill-chat-card">
+              <h2>Skill 对话控制台</h2>
+              <p class="muted">后台独立 API，默认接入本机已安装的 xie-xiao-shu skill。</p>
+
+              <label class="form-row">
+                <span>API Base URL</span>
+                <input id="skillBaseUrl" placeholder="https://api.openai.com/v1">
+              </label>
+              <label class="form-row">
+                <span>API Key</span>
+                <input id="skillApiKey" type="password" autocomplete="off" placeholder="留空则保留已有密钥">
+              </label>
+              <label class="form-row">
+                <span>模型</span>
+                <div class="skill-model-row">
+                  <input id="skillModel" list="skillModelList" placeholder="gpt-4.1-mini">
+                  <button id="loadSkillModels" type="button" class="ghost-btn">获取模型</button>
+                </div>
+                <datalist id="skillModelList"></datalist>
+              </label>
+              <label class="form-row">
+                <span>Skill 名称</span>
+                <input id="skillName" placeholder="xie-xiao-shu">
+              </label>
+
+              <div class="form-actions skill-actions">
+                <button id="saveSkillConfig" type="button" class="primary">保存配置</button>
+                <button id="testSkillConnection" type="button" class="ghost-btn">测试连接</button>
+              </div>
+
+              <div id="skillStatus" class="skill-status">等待加载配置...</div>
+              <div class="skill-url-box">
+                <span>后台页面</span>
+                <code id="skillAdminUrl">-</code>
+                <span>对话 API</span>
+                <code id="skillApiUrl">-</code>
+              </div>
+            </div>
+          </aside>
+
+          <div class="card skill-chat-main">
+            <div class="skill-chat-head">
+              <div>
+                <h2>xie-xiao-shu 可视化对话</h2>
+                <p class="muted">用于关系、梦境、依恋与客体关系分析。输入后按 Enter 发送，Shift+Enter 换行。</p>
+              </div>
+              <button id="clearSkillChat" type="button" class="ghost-btn">清空对话</button>
+            </div>
+
+            <div id="skillMessages" class="skill-messages" aria-live="polite"></div>
+
+            <div class="skill-composer">
+              <textarea id="skillPrompt" rows="3" placeholder="把你想分析的关系、梦境或一句卡住你的话写在这里..."></textarea>
+              <button id="sendSkillPrompt" type="button" class="primary">发送</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5：更多 -->
       <section class="tab-panel" data-panel="more">
         <div class="cards-grid">
           <div class="card">
