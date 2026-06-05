@@ -65,7 +65,9 @@
   }
 
   function endpoint(path) {
-    return apiBase() + '/api/public-skill-chat' + path;
+    var apiStyle = window.BOKE_SKILL_CHAT_API_STYLE || '';
+    var suffix = apiStyle === 'php' ? '.php' : '';
+    return apiBase() + '/api/public-skill-chat' + path + suffix;
   }
 
   function escapeHtml(value) {

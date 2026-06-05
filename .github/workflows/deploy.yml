@@ -1,11 +1,6 @@
 name: Deploy Hexo to gh-pages
 
 on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - '.github/workflows/pages.yml'
   workflow_dispatch:
 
 permissions:

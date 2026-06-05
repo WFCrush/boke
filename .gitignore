@@ -12,3 +12,4 @@ _multiconfig.yml
 .admin-trash/
 .admin-password
 skill-chat-sessions/
+source/api/public-skill-chat/config.local.php
