@@ -4,6 +4,6 @@ return [
   'model' => '',
   'apiKey' => '',
   'skillName' => 'xie-xiao-shu',
-  'allowedOrigin' => '*',
+  'allowedOrigin' => 'https://wfcrush.github.io',
   'rateLimitPerHour' => 60,
 ];

@@ -11,5 +11,6 @@ _multiconfig.yml
 .admin-backups/
 .admin-trash/
 .admin-password
+.codex-tmp/
 skill-chat-sessions/
 source/api/public-skill-chat/config.local.php

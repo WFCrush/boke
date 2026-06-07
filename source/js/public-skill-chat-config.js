@@ -1,4 +1,4 @@
 (function () {
-  window.BOKE_SKILL_CHAT_API_BASE = "https://cc.infinityfree.me";
-  window.BOKE_SKILL_CHAT_API_STYLE = "php";
+  window.BOKE_SKILL_CHAT_API_BASE = "/boke/api/public-skill-chat";
+  window.BOKE_SKILL_CHAT_API_STYLE = "node";
 }());

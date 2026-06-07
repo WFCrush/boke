@@ -9,7 +9,8 @@
     "deploy": "hexo deploy",
     "new": "powershell -ExecutionPolicy Bypass -File tools/new-post.ps1",
     "publish": "powershell -ExecutionPolicy Bypass -File tools/publish.ps1",
-    "server": "hexo server"
+    "server": "hexo server",
+    "skill-api": "node server/public-skill-chat-api.js"
   },
   "hexo": {
     "version": "7.3.0"

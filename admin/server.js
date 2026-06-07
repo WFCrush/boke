@@ -22,11 +22,13 @@ const contactFile = path.join(root, 'source', 'contact', 'contact.json');
 const publicDir = path.join(__dirname, 'public');
 const hexoConfig = path.join(root, '_config.yml');
 const publishDir = path.join(root, 'public');
-const port = Number(process.env.ADMIN_PORT || 5050);
-const host = process.env.ADMIN_HOST || '127.0.0.1';
+const port = Number(process.env.PORT || process.env.ADMIN_PORT || 5050);
+const host = process.env.ADMIN_HOST || (process.env.PORT ? '0.0.0.0' : '127.0.0.1');
 const passwordFile = path.join(root, '.admin-password');
 const skillChatConfigFile = path.join(root, '.admin-tmp', 'skill-chat-config.json');
-const publicSkillChatDir = path.join(root, 'skill-chat-sessions', 'sessions');
+const publicSkillChatDir = process.env.PUBLIC_SKILL_CHAT_DIR
+  ? path.resolve(process.env.PUBLIC_SKILL_CHAT_DIR)
+  : path.join(root, 'skill-chat-sessions', 'sessions');
 const publicSkillChatClientConfigFile = path.join(root, 'source', 'js', 'public-skill-chat-config.js');
 let password = process.env.ADMIN_PASSWORD || 'admin123';
 const sessions = new Map();
@@ -34,6 +36,7 @@ const jobs = new Map();
 const publicSkillChatRate = new Map();
 
 const app = express();
+app.set('trust proxy', 1);
 
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
@@ -151,7 +154,7 @@ function publicSkillChatAccess(req, res, next) {
   }
   const allowedOrigin = process.env.PUBLIC_SKILL_CHAT_ORIGIN || '*';
   res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Vary', 'Origin');
   if (req.method === 'OPTIONS') {
@@ -481,10 +484,21 @@ async function writePublicSkillChatClientConfig(publicApiBase) {
   const js = [
     '(function () {',
     `  window.BOKE_SKILL_CHAT_API_BASE = ${JSON.stringify(base)};`,
+    `  window.BOKE_SKILL_CHAT_API_STYLE = ${JSON.stringify(base ? 'node' : '')};`,
     '}());',
     '',
   ].join('\n');
   await fs.writeFile(publicSkillChatClientConfigFile, js, 'utf8');
+}
+
+function fallbackSkillPrompt(skillName) {
+  return [
+    `当前云端未读取到完整的 ${skillName} skill 文件，先使用压缩版关系分析框架运行。`,
+    '核心工作方式：把用户叙述拆成事实、感受、身体反应、幻想/梦境元素、关系互动和反复出现的模式。',
+    '重点观察依恋需求、亲密与吞没感、边界、控制/被控制、羞耻、攻击性、理想化与贬低、分离焦虑、重复性关系脚本。',
+    '回答时不要把梦境或性内容当作现实意图的证据，也不要给确定诊断；更适合提出可能的心理动力假设和可观察问题。',
+    '结构建议：先共情与命名主题，再给 2-4 个可能原因，最后给用户可继续观察或记录的问题。',
+  ].join('\n');
 }
 
 async function loadSkillPrompt(skillName) {
@@ -507,6 +521,8 @@ async function loadSkillPrompt(skillName) {
     parts.push(selected.join('\n').slice(0, 14000));
   } catch (_) {}
 
+  const material = parts.length ? parts.join('\n\n') : fallbackSkillPrompt(skillName);
+
   return [
     `你正在作为 Codex 后台里的可视化 skill 对话助手运行，当前 skill: ${skillName}。`,
     '默认使用简体中文。回答要直接、克制、有洞察，但不能冒充持牌心理咨询或医疗诊断。',
@@ -514,7 +530,7 @@ async function loadSkillPrompt(skillName) {
     '如果用户在关系、梦境、依恋、边界、客体关系等主题上求助，优先使用下方 skill 材料里的框架。',
     '不要编造“原话”。只有材料里出现过的原话才可标成原话；否则说“基于这个框架”。',
     '当前是网页聊天场景，输出适合直接显示的 Markdown。',
-    parts.join('\n\n'),
+    material,
   ].filter(Boolean).join('\n\n').slice(0, 30000);
 }
 
@@ -1051,6 +1067,23 @@ app.use(assertLocal);
 
 app.get('/api/ping', (_req, res) => {
   res.json({ ok: true, time: new Date().toISOString() });
+});
+
+app.get('/api/public-skill-chat/health', async (_req, res) => {
+  try {
+    const config = await getSkillChatConfig();
+    res.json({
+      ok: true,
+      time: new Date().toISOString(),
+      model: config.model,
+      baseUrl: config.baseUrl,
+      skillName: config.skillName,
+      hasApiKey: config.hasApiKey,
+      storageDir: publicSkillChatDir,
+    });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
 });
 
 app.post('/api/login', (req, res) => {

@@ -333,7 +333,8 @@
   min-width: 96px;
 }
 
-html.dark .public-skill-chat {
+html.dark .public-skill-chat,
+html[data-user-color-scheme="dark"] .public-skill-chat {
   --psc-ink: #edf3f8;
   --psc-muted: #a7b4c6;
   --psc-line: rgba(166, 184, 205, 0.22);
@@ -344,11 +345,16 @@ html.dark .public-skill-chat {
 html.dark .psc-field input,
 html.dark .psc-composer textarea,
 html.dark .psc-actions .psc-quiet,
-html.dark .psc-bubble {
+html.dark .psc-bubble,
+html[data-user-color-scheme="dark"] .psc-field input,
+html[data-user-color-scheme="dark"] .psc-composer textarea,
+html[data-user-color-scheme="dark"] .psc-actions .psc-quiet,
+html[data-user-color-scheme="dark"] .psc-bubble {
   background: rgba(255, 255, 255, 0.05);
 }
 
-html.dark .psc-messages {
+html.dark .psc-messages,
+html[data-user-color-scheme="dark"] .psc-messages {
   background: #0d1724;
 }
 

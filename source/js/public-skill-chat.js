@@ -32,7 +32,7 @@
       '  <aside class="psc-control">',
       '    <label class="psc-field">',
       '      <span>会话密钥</span>',
-      '      <input id="pscSecret" type="password" autocomplete="off" placeholder="至少 6 个字符">',
+      '      <input id="pscSecret" type="password" autocomplete="off" placeholder="至少 12 个字符">',
       '    </label>',
       '    <div class="psc-actions">',
       '      <button id="pscResume" type="button">载入/继续</button>',
@@ -66,8 +66,8 @@
 
   function endpoint(path) {
     var apiStyle = window.BOKE_SKILL_CHAT_API_STYLE || '';
-    var suffix = apiStyle === 'php' ? '.php' : '';
-    return apiBase() + '/api/public-skill-chat' + path + suffix;
+    if (apiStyle === 'php') return apiBase() + path + '.php';
+    return apiBase() + path;
   }
 
   function escapeHtml(value) {
@@ -116,10 +116,12 @@
     }
     var res = await fetch(endpoint(path), {
       method: 'POST',
+      credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body || {})
     });
-    var data = await res.json().catch(function () { return {}; });
+    var data = await res.json().catch(function () { return null; });
+    if (!data) throw new Error('接口返回不是 JSON，请先在浏览器打开后端健康检查页面后重试');
     if (!res.ok) throw new Error(data.error || '请求失败');
     return data;
   }
@@ -160,7 +162,7 @@
 
   function secretValue() {
     var value = byId('pscSecret').value.trim();
-    if (value.length < 6) throw new Error('请先输入至少 6 个字符的会话密钥');
+    if (value.length < 12) throw new Error('请先输入至少 12 个字符的会话密钥');
     return value;
   }
 
@@ -222,11 +224,11 @@
     var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
     var out = '';
     if (window.crypto && window.crypto.getRandomValues) {
-      var bytes = new Uint8Array(18);
+      var bytes = new Uint8Array(24);
       window.crypto.getRandomValues(bytes);
       for (var i = 0; i < bytes.length; i += 1) out += chars[bytes[i] % chars.length];
     } else {
-      for (var j = 0; j < 18; j += 1) out += chars[Math.floor(Math.random() * chars.length)];
+      for (var j = 0; j < 24; j += 1) out += chars[Math.floor(Math.random() * chars.length)];
     }
     byId('pscSecret').value = out;
     setStatus('idle', '密钥已生成', '请保存这个密钥，然后点击载入/继续。');
