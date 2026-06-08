@@ -7,6 +7,8 @@
     "build": "hexo generate",
     "clean": "hexo clean",
     "deploy": "hexo deploy",
+    "aliyun:key": "powershell -ExecutionPolicy Bypass -File tools/prepare-aliyun-ssh.ps1",
+    "aliyun:deploy": "powershell -ExecutionPolicy Bypass -File tools/deploy-aliyun.ps1",
     "new": "powershell -ExecutionPolicy Bypass -File tools/new-post.ps1",
     "publish": "powershell -ExecutionPolicy Bypass -File tools/publish.ps1",
     "server": "hexo server",
