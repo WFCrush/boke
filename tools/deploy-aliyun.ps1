@@ -22,6 +22,7 @@ if ([string]::IsNullOrWhiteSpace($KeyPath)) {
 }
 
 $KeyPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($KeyPath)
+$GitKeyPath = $KeyPath -replace '\\', '/'
 $publicKeyPath = "$KeyPath.pub"
 
 function Invoke-Checked {
@@ -117,6 +118,8 @@ try {
   Invoke-Checked 'git.exe' @('checkout', '-B', $Branch) $deployDir
   Invoke-Checked 'git.exe' @('config', 'user.name', 'boke deploy') $deployDir
   Invoke-Checked 'git.exe' @('config', 'user.email', 'boke-deploy@local') $deployDir
+  Invoke-Checked 'git.exe' @('config', 'core.autocrlf', 'false') $deployDir
+  Invoke-Checked 'git.exe' @('config', 'core.sshCommand', "ssh -i $GitKeyPath -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new") $deployDir
   Invoke-Checked 'git.exe' @('add', 'boke') $deployDir
   Invoke-Checked 'git.exe' @('commit', '-m', "deploy boke $stamp") $deployDir
 
