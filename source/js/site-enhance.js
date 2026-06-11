@@ -8,6 +8,25 @@
     subscribeAction: ''
   };
 
+  var homeWallpapers = [
+    {
+      url: 'https://cdn.jsdelivr.net/gh/WFCrush/GitHub-PicBed@main/2026/boke-wallpapers/boke-wallpaper-01-cosmic-cliffs.jpg',
+      label: 'Cosmic Cliffs'
+    },
+    {
+      url: 'https://cdn.jsdelivr.net/gh/WFCrush/GitHub-PicBed@main/2026/boke-wallpapers/boke-wallpaper-02-first-deep-field.jpg',
+      label: "Webb's First Deep Field"
+    },
+    {
+      url: 'https://cdn.jsdelivr.net/gh/WFCrush/GitHub-PicBed@main/2026/boke-wallpapers/boke-wallpaper-03-tarantula-nebula.jpg',
+      label: 'Tarantula Nebula'
+    },
+    {
+      url: 'https://cdn.jsdelivr.net/gh/WFCrush/GitHub-PicBed@main/2026/boke-wallpapers/boke-wallpaper-04-southern-ring.jpg',
+      label: 'Southern Ring Nebula'
+    }
+  ];
+
   function ready(fn) {
     if (document.readyState !== 'loading') fn();
     else document.addEventListener('DOMContentLoaded', fn);
@@ -23,7 +42,7 @@
 
   function isHomePage() {
     var path = location.pathname.replace(/\/+$/, '/');
-    return path === '/boke/' || path === '/';
+    return path === '/boke/' || path === '/boke/index.html' || path === '/' || path === '/index.html';
   }
 
   function enhanceImages() {
@@ -250,6 +269,72 @@
     });
   }
 
+  function dynamicHomeWallpaper() {
+    if (!isHomePage() || !homeWallpapers.length) return;
+    var banner = document.getElementById('banner');
+    if (!banner || banner.dataset.wallpaperReady) return;
+
+    document.body.classList.add('boke-home');
+    banner.dataset.wallpaperReady = 'true';
+    banner.classList.add('boke-dynamic-wallpaper');
+    banner.style.backgroundImage = 'none';
+
+    var layers = [document.createElement('span'), document.createElement('span')];
+    layers.forEach(function (layer) {
+      layer.className = 'boke-wallpaper-layer';
+      layer.setAttribute('aria-hidden', 'true');
+      banner.insertBefore(layer, banner.firstChild);
+    });
+
+    var credit = document.createElement('a');
+    credit.className = 'boke-wallpaper-credit';
+    credit.href = 'https://www.nasa.gov/nasa-brand-center/images-and-media/';
+    credit.target = '_blank';
+    credit.rel = 'noopener';
+    credit.textContent = 'Images: NASA / ESA / CSA / STScI';
+    banner.appendChild(credit);
+
+    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var current = Math.floor(Math.random() * homeWallpapers.length);
+    var activeLayer = 0;
+
+    function setLayer(layer, wallpaper) {
+      layer.style.backgroundImage = 'url("' + wallpaper.url + '")';
+      banner.setAttribute('data-wallpaper-title', wallpaper.label);
+    }
+
+    function preload(index) {
+      var img = new Image();
+      img.decoding = 'async';
+      img.src = homeWallpapers[index].url;
+    }
+
+    setLayer(layers[activeLayer], homeWallpapers[current]);
+    layers[activeLayer].classList.add('is-active');
+    preload((current + 1) % homeWallpapers.length);
+
+    if (!reduceMotion) {
+      window.setInterval(function () {
+        var next = (current + 1) % homeWallpapers.length;
+        var nextLayer = activeLayer === 0 ? 1 : 0;
+        setLayer(layers[nextLayer], homeWallpapers[next]);
+        layers[nextLayer].classList.add('is-active');
+        layers[activeLayer].classList.remove('is-active');
+        current = next;
+        activeLayer = nextLayer;
+        preload((current + 1) % homeWallpapers.length);
+      }, 8500);
+
+      function updateOffset() {
+        var offset = Math.min(window.scrollY * 0.12, 88);
+        banner.style.setProperty('--boke-wallpaper-offset', offset.toFixed(1) + 'px');
+      }
+
+      updateOffset();
+      window.addEventListener('scroll', updateOffset, { passive: true });
+    }
+  }
+
   function kuromiCursor() {
     if (window.matchMedia('(pointer: coarse)').matches || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     var cursor = document.createElement('div');
@@ -296,6 +381,7 @@
     readingProgress();
     addSchema();
     buildHomeSidebar();
+    dynamicHomeWallpaper();
     selectionShare();
     likeCard();
     relatedPosts();

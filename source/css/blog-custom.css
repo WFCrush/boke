@@ -101,6 +101,88 @@ body.boke-home #banner .banner-text::before {
   line-height: 1.1;
 }
 
+body.boke-home #banner.boke-dynamic-wallpaper {
+  position: relative;
+  isolation: isolate;
+  min-height: clamp(520px, 72vh, 760px);
+  overflow: hidden;
+  background-color: #08111f;
+  background-image: none !important;
+}
+
+body.boke-home #banner.boke-dynamic-wallpaper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(22, 93, 255, 0.32), transparent 32%),
+    linear-gradient(120deg, rgba(5, 12, 26, 0.82), rgba(8, 17, 31, 0.38) 48%, rgba(15, 23, 42, 0.78));
+}
+
+body.boke-home #banner.boke-dynamic-wallpaper .boke-wallpaper-layer {
+  position: absolute;
+  inset: -8%;
+  z-index: 0;
+  background-position: center;
+  background-size: cover;
+  opacity: 0;
+  transform: translate3d(0, calc(var(--boke-wallpaper-offset, 0px) * -1), 0) scale(1.08);
+  transition: opacity 1.35s ease, transform 0.2s linear;
+  animation: boke-wallpaper-drift 34s ease-in-out infinite alternate;
+  will-change: opacity, transform;
+}
+
+body.boke-home #banner.boke-dynamic-wallpaper .boke-wallpaper-layer + .boke-wallpaper-layer {
+  animation-duration: 42s;
+  animation-direction: alternate-reverse;
+}
+
+body.boke-home #banner.boke-dynamic-wallpaper .boke-wallpaper-layer.is-active {
+  opacity: 1;
+}
+
+body.boke-home #banner.boke-dynamic-wallpaper > .container,
+body.boke-home #banner.boke-dynamic-wallpaper .banner-text {
+  position: relative;
+  z-index: 2;
+}
+
+.boke-wallpaper-credit {
+  position: absolute;
+  right: clamp(16px, 4vw, 56px);
+  bottom: 22px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(8, 17, 31, 0.42);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.78rem;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  backdrop-filter: blur(10px);
+}
+
+.boke-wallpaper-credit:hover {
+  color: #fff;
+  background: rgba(22, 93, 255, 0.38);
+}
+
+@keyframes boke-wallpaper-drift {
+  from {
+    background-position: 48% 50%;
+  }
+
+  to {
+    background-position: 54% 46%;
+  }
+}
+
 #board {
   border-radius: var(--radius);
   box-shadow: var(--shadow-soft);
@@ -709,6 +791,18 @@ html[data-user-color-scheme="dark"] #toc {
     font-size: 34px;
   }
 
+  body.boke-home #banner.boke-dynamic-wallpaper {
+    min-height: 560px;
+  }
+
+  .boke-wallpaper-credit {
+    right: 16px;
+    bottom: 14px;
+    max-width: calc(100% - 32px);
+    min-height: 30px;
+    font-size: 0.72rem;
+  }
+
   .post-content {
     padding-left: var(--space-3);
     padding-right: var(--space-3);
@@ -745,5 +839,10 @@ html[data-user-color-scheme="dark"] #toc {
   .boke-kuromi-cursor,
   .boke-kuromi-trail {
     display: none !important;
+  }
+
+  body.boke-home #banner.boke-dynamic-wallpaper .boke-wallpaper-layer {
+    animation: none !important;
+    transform: scale(1.02) !important;
   }
 }
