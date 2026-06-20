@@ -9,11 +9,11 @@
   function isHome() {
     var path = location.pathname.replace(/\/index\.html$/i, '/');
     if (path !== '/' && path.charAt(path.length - 1) !== '/') path += '/';
-    return path === '/' || path === '/boke/';
+    return path === '/';
   }
 
   function root() {
-    return location.pathname.indexOf('/boke/') === 0 ? '/boke/' : '/';
+    return '/';
   }
 
   function text(node, value) {

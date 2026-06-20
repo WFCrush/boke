@@ -15,11 +15,11 @@
 
   function isHomePage() {
     var path = normalizedPath();
-    return path === '/' || path === '/boke/';
+    return path === '/';
   }
 
   function siteRoot() {
-    return normalizedPath().indexOf('/boke/') === 0 ? '/boke/' : '/';
+    return '/';
   }
 
   function text(node) {

@@ -1,7 +1,7 @@
 (function () {
   var site = {
     author: 'ASHUWEI',
-    avatar: '/boke/img/avatar.png',
+    avatar: '/img/avatar.png',
     github: 'https://github.com/WFCrush',
     zhihu: 'https://www.zhihu.com',
     juejin: 'https://juejin.cn',
@@ -23,7 +23,7 @@
 
   function isHomePage() {
     var path = location.pathname.replace(/\/+$/, '/');
-    return path === '/boke/' || path === '/boke/index.html' || path === '/' || path === '/index.html';
+    return path === '/' || path === '/index.html';
   }
 
   function enhanceImages() {

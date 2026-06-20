@@ -791,7 +791,7 @@ post:
 
   custom:
     enable: true
-    content: '<section class="boke-author-card" aria-label="作者简介"><img src="/boke/img/avatar.png" alt="ASHUWEI 头像"><div><h2>关于 ASHUWEI</h2><p>计算机专业学习者，持续记录编程学习、项目实践和技术成长中的真实踩坑经验。</p><p><a href="https://github.com/WFCrush" target="_blank" rel="noopener">GitHub</a><span aria-hidden="true"> · </span><a href="/boke/about/">关于我</a></p></div></section><section class="boke-subscribe-card" aria-label="邮件订阅"><h2>订阅更新</h2><p>想收到新文章提醒，可以把 Mailchimp 表单地址填到 source/js/site-enhance.js 的 subscribeAction。</p><form class="boke-subscribe-form" action="#" method="post" target="_blank"><input type="email" name="EMAIL" placeholder="你的邮箱" aria-label="邮箱地址" required><button type="submit">订阅</button></form></section>'
+    content: '<section class="boke-author-card" aria-label="作者简介"><img src="/img/avatar.png" alt="ASHUWEI 头像"><div><h2>关于 ASHUWEI</h2><p>计算机专业学习者，持续记录编程学习、项目实践和技术成长中的真实踩坑经验。</p><p><a href="https://github.com/WFCrush" target="_blank" rel="noopener">GitHub</a><span aria-hidden="true"> · </span><a href="/about/">关于我</a></p></div></section><section class="boke-subscribe-card" aria-label="邮件订阅"><h2>订阅更新</h2><p>想收到新文章提醒，可以把 Mailchimp 表单地址填到 source/js/site-enhance.js 的 subscribeAction。</p><form class="boke-subscribe-form" action="#" method="post" target="_blank"><input type="email" name="EMAIL" placeholder="你的邮箱" aria-label="邮箱地址" required><button type="submit">订阅</button></form></section>'
 
 
 #---------------------------

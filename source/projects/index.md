@@ -16,7 +16,7 @@ comment: false
 
   <div class="aurora-project-grid">
     <article class="aurora-project-card is-featured">
-      <img src="/boke/img/home-banner.png" alt="Aurora Theme">
+      <img src="/img/home-banner.png" alt="Aurora Theme">
       <div>
         <span>Aurora UI</span>
         <h2>Aurora Blog Theme</h2>
@@ -25,7 +25,7 @@ comment: false
     </article>
 
     <article class="aurora-project-card">
-      <img src="/boke/img/home-banner.png" alt="Blog Builder">
+      <img src="/img/home-banner.png" alt="Blog Builder">
       <div>
         <span>Workflow</span>
         <h2>Blog Builder</h2>
@@ -34,7 +34,7 @@ comment: false
     </article>
 
     <article class="aurora-project-card">
-      <img src="/boke/img/home-banner.png" alt="Fast Mode">
+      <img src="/img/home-banner.png" alt="Fast Mode">
       <div>
         <span>Desktop</span>
         <h2>Fast Mode 修复</h2>
@@ -43,7 +43,7 @@ comment: false
     </article>
 
     <article class="aurora-project-card">
-      <img src="/boke/img/home-banner.png" alt="Secure Preview">
+      <img src="/img/home-banner.png" alt="Secure Preview">
       <div>
         <span>Security</span>
         <h2>Secure Preview</h2>
@@ -52,7 +52,7 @@ comment: false
     </article>
 
     <article class="aurora-project-card">
-      <img src="/boke/img/home-banner.png" alt="Public Skill Chat">
+      <img src="/img/home-banner.png" alt="Public Skill Chat">
       <div>
         <span>AI Tool</span>
         <h2>Public Skill Chat</h2>
@@ -61,7 +61,7 @@ comment: false
     </article>
 
     <article class="aurora-project-card">
-      <img src="/boke/img/home-banner.png" alt="Mingli Tool">
+      <img src="/img/home-banner.png" alt="Mingli Tool">
       <div>
         <span>Experiment</span>
         <h2>Mingli Tool</h2>

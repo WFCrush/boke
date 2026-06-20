@@ -5,7 +5,7 @@
     });
   }
 
-  fetch('/boke/contact/contact.json', { cache: 'no-store' })
+  fetch('/contact/contact.json', { cache: 'no-store' })
     .then(function (res) { return res.ok ? res.json() : null; })
     .then(function (contact) {
       if (!contact || (!contact.qq && !contact.wechat && !contact.wechatQr)) return;

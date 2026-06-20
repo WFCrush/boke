@@ -22,7 +22,7 @@ sticky: 10
 这个博客使用 Hexo 框架和 Fluid 主题，源码托管在 GitHub 仓库，最终通过 GitHub Pages 发布到公开地址：
 
 ```text
-https://wfcrush.github.io/boke/
+https://wfcrush.github.io/
 ```
 
 我把这篇文章作为博客维护手册，之后遇到发布失败、样式没更新、文章没出现等问题时，可以按这里的顺序排查。
@@ -40,7 +40,7 @@ npm run server
 默认预览地址通常是：
 
 ```text
-http://localhost:4000/boke/
+http://localhost:4000/
 ```
 
 如果页面能正常打开，说明 Markdown、主题配置和静态资源路径基本没有问题。
