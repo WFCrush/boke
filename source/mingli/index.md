@@ -33,6 +33,7 @@ layout: page
 </form>
 
 <div id="result" style="margin-top:24px;display:none">
+  <div id="result-thinking" style="color:#888;font-size:0.9em;margin-bottom:8px;display:none">思考中...</div>
   <div id="result-content" style="white-space:pre-wrap;line-height:1.8"></div>
 </div>
 
@@ -69,7 +70,9 @@ document.getElementById('mingli-form').addEventListener('submit', async (e) => {
     if (contentType.includes('text/event-stream')) {
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
+      const thinkingDiv = document.getElementById('result-thinking');
       let buf = '';
+      let hasContent = false;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -81,8 +84,17 @@ document.getElementById('mingli-form').addEventListener('submit', async (e) => {
           const data = line.slice(5).trim();
           if (data === '[DONE]') break;
           try {
-            const delta = JSON.parse(data)?.choices?.[0]?.delta?.content;
-            if (delta) contentDiv.textContent += delta;
+            const parsed = JSON.parse(data)?.choices?.[0]?.delta;
+            if (parsed?.reasoning_content && !hasContent) {
+              thinkingDiv.style.display = 'block';
+            }
+            if (parsed?.content) {
+              if (!hasContent) {
+                hasContent = true;
+                thinkingDiv.style.display = 'none';
+              }
+              contentDiv.textContent += parsed.content;
+            }
           } catch {}
         }
       }
