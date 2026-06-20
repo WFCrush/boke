@@ -31,6 +31,7 @@
           <button class="nav-tab active" data-tab="editor">✍️ 写作</button>
           <button class="nav-tab" data-tab="posts">📚 文章管理</button>
           <button class="nav-tab" data-tab="site">🎨 主页设置</button>
+          <button class="nav-tab" data-tab="publish">GitHub 同步</button>
           <button class="nav-tab" data-tab="skill-chat">Skill 对话</button>
           <button class="nav-tab" data-tab="more">⚙️ 更多</button>
         </div>
@@ -229,7 +230,7 @@
             <input id="cfgAboutName" placeholder="例如：晚风">
           </label>
           <label class="form-row">
-            <span>个人介绍（一句话）</span>
+            <span>首页/关于页个人介绍（一句话）</span>
             <input id="cfgAboutIntro" placeholder="例如：机械工程在读，记录毕设与生活">
           </label>
 
@@ -241,7 +242,79 @@
         </div>
       </section>
 
-      <!-- TAB 4：Skill 对话 -->
+      <!-- TAB 4：GitHub 同步 -->
+      <section class="tab-panel" data-panel="publish">
+        <div class="publish-layout">
+          <div class="card publish-card publish-main-card">
+            <div class="publish-card-head">
+              <div>
+                <h2>GitHub 同步</h2>
+                <p class="muted">构建博客，提交本地改动，推送到 GitHub，并等待 Pages 自动部署完成。</p>
+              </div>
+              <span id="publishJobState" class="publish-state">就绪</span>
+            </div>
+
+            <div class="publish-status-grid">
+              <div class="publish-status-item">
+                <span>仓库</span>
+                <strong id="publishRepo">-</strong>
+              </div>
+              <div class="publish-status-item">
+                <span>分支</span>
+                <strong id="publishBranch">-</strong>
+              </div>
+              <div class="publish-status-item">
+                <span>最近提交</span>
+                <strong id="publishHead">-</strong>
+              </div>
+              <div class="publish-status-item">
+                <span>本地改动</span>
+                <strong id="publishDirty">-</strong>
+              </div>
+            </div>
+
+            <div class="publish-site-row">
+              <span>公开站点</span>
+              <a id="publishSite" href="#" target="_blank" rel="noopener">-</a>
+            </div>
+
+            <div class="form-actions left-actions publish-actions">
+              <button id="publishSyncBtn" type="button" class="danger">同步到网站</button>
+              <button id="refreshPublishStatus" type="button" class="ghost-btn">刷新状态</button>
+              <button id="publishOpenSite" type="button" class="ghost-btn">打开网站</button>
+              <button id="publishOpenRepo" type="button" class="ghost-btn">打开仓库</button>
+              <button id="publishOpenActions" type="button" class="ghost-btn">查看 Actions</button>
+            </div>
+          </div>
+
+          <div class="card publish-card">
+            <h2>部署状态</h2>
+            <div class="publish-meta-list">
+              <div><span>GitHub 凭据</span><strong id="publishCredential">-</strong></div>
+              <div><span>Pages 工作流</span><strong id="publishRunStatus">-</strong></div>
+              <div><span>工作流时间</span><strong id="publishRunTime">-</strong></div>
+              <div><span>站点 root</span><strong id="publishRoot">-</strong></div>
+            </div>
+            <p id="publishRunError" class="hint hidden"></p>
+          </div>
+
+          <div class="card publish-card">
+            <h2>本地改动</h2>
+            <p class="muted">同步会把这些改动一起提交到当前分支。</p>
+            <div id="publishDirtyList" class="publish-dirty-list">等待刷新...</div>
+          </div>
+
+          <div class="card publish-card publish-log-card">
+            <div class="publish-card-head compact">
+              <h2>同步日志</h2>
+              <button id="clearPublishLog" type="button" class="ghost-btn small">清空</button>
+            </div>
+            <pre id="publishLog" class="publish-log">准备就绪。</pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5：Skill 对话 -->
       <section class="tab-panel" data-panel="skill-chat">
         <div class="skill-chat-layout">
           <aside class="skill-chat-sidebar">
@@ -308,7 +381,7 @@
         </div>
       </section>
 
-      <!-- TAB 5：更多 -->
+      <!-- TAB 6：更多 -->
       <section class="tab-panel" data-panel="more">
         <div class="cards-grid">
           <div class="card">

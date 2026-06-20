@@ -140,79 +140,79 @@ dark_mode:
 color:
   # body 背景色
   # Color of body background
-  body_bg_color: "#f7f9fc"
+  body_bg_color: "#f7f5f0"
   # 暗色模式下的 body 背景色，下同
   # Color in dark mode, the same below
-  body_bg_color_dark: "#121212"
+  body_bg_color_dark: "#0f141b"
 
   # 顶部菜单背景色
   # Color of navigation bar background
-  navbar_bg_color: "#0f172a"
-  navbar_bg_color_dark: "#121212"
+  navbar_bg_color: "rgba(247,245,240,0.86)"
+  navbar_bg_color_dark: "rgba(15,20,27,0.86)"
 
   # 顶部菜单字体色
   # Color of navigation bar text
-  navbar_text_color: "#fff"
-  navbar_text_color_dark: "#d0d0d0"
+  navbar_text_color: "#263241"
+  navbar_text_color_dark: "rgba(245,241,232,0.88)"
 
   # 副标题字体色
   # Color of subtitle text
-  subtitle_color: "#fff"
-  subtitle_color_dark: "rgba(255,255,255,0.87)"
+  subtitle_color: "#4b5563"
+  subtitle_color_dark: "rgba(245,241,232,0.72)"
 
   # 全局字体色
   # Color of global text
-  text_color: "#1f2937"
-  text_color_dark: "rgba(255,255,255,0.87)"
+  text_color: "#202936"
+  text_color_dark: "rgba(245,241,232,0.88)"
 
   # 全局次级字体色（摘要、简介等位置）
   # Color of global secondary text (excerpt, introduction, etc.)
-  sec_text_color: "#5f6b7a"
-  sec_text_color_dark: "rgba(255,255,255,0.64)"
+  sec_text_color: "#687385"
+  sec_text_color_dark: "rgba(245,241,232,0.62)"
 
   # 主面板背景色
   # Color of main board
-  board_color: "#fff"
-  board_color_dark: "#1a1a1a"
+  board_color: "#fffdfa"
+  board_color_dark: "#171d25"
 
   # 文章正文字体色
   # Color of post text
-  post_text_color: "#1f2937"
-  post_text_color_dark: "rgba(255,255,255,0.87)"
+  post_text_color: "#202936"
+  post_text_color_dark: "rgba(245,241,232,0.88)"
 
   # 文章正文字体色（h1 h2 h3...）
   # Color of Article heading (h1 h2 h3...)
   post_heading_color: "#111827"
-  post_heading_color_dark: "rgba(255,255,255,0.92)"
+  post_heading_color_dark: "rgba(245,241,232,0.94)"
 
   # 文章超链接字体色
   # Color of post link
-  post_link_color: "#165DFF"
-  post_link_color_dark: "#7fb0ff"
+  post_link_color: "#3f5f7f"
+  post_link_color_dark: "#9fb8d0"
 
   # 超链接悬浮时字体色
   # Color of link when hovering
-  link_hover_color: "#0FC6C2"
-  link_hover_color_dark: "#0FC6C2"
+  link_hover_color: "#111827"
+  link_hover_color_dark: "#f5f1e8"
 
   # 超链接悬浮背景色
   # Color of link background when hovering
-  link_hover_bg_color: "rgba(22,93,255,0.08)"
-  link_hover_bg_color_dark: "rgba(15,198,194,0.14)"
+  link_hover_bg_color: "rgba(63,95,127,0.08)"
+  link_hover_bg_color_dark: "rgba(159,184,208,0.12)"
 
   # 分隔线和表格边线的颜色
   # Color of horizontal rule and table border
-  line_color: "#e5e7eb"
-  line_color_dark: "#333842"
+  line_color: "#e4dfd6"
+  line_color_dark: "rgba(245,241,232,0.14)"
 
   # 滚动条颜色
   # Color of scrollbar
-  scrollbar_color: "#c4c6c9"
-  scrollbar_color_dark: "#687582"
+  scrollbar_color: "#c9c1b4"
+  scrollbar_color_dark: "#46515f"
   # 滚动条悬浮颜色
   # Color of scrollbar when hovering
-  scrollbar_hover_color: "#165DFF"
-  scrollbar_hover_color_dark: "#0FC6C2"
+  scrollbar_hover_color: "#3f5f7f"
+  scrollbar_hover_color_dark: "#9fb8d0"
 
   # 按钮背景色
   # Color of button
@@ -220,8 +220,8 @@ color:
   button_bg_color_dark: "transparent"
   # 按钮悬浮背景色
   # Color of button when hovering
-  button_hover_bg_color: "rgba(22,93,255,0.10)"
-  button_hover_bg_color_dark: "rgba(15,198,194,0.16)"
+  button_hover_bg_color: "rgba(63,95,127,0.08)"
+  button_hover_bg_color_dark: "rgba(159,184,208,0.12)"
 
 # 主题字体配置
 # Font
@@ -386,15 +386,8 @@ navbar:
   # Navigation bar frosted glass special animation. It is an experimental feature
   ground_glass:
     enable: true
-
-    # 模糊像素，只能为数字，数字越大模糊度越高
-    # Number of blurred pixel. the larger the number, the higher the blur
-    px: 3
-
-    # 不透明度，数字越大透明度越低，注意透明过度可能看不清菜单字体
-    # Ratio of opacity, 1.0 is completely opaque
-    # available: 0 - 1.0
-    alpha: 0.82
+    px: 2
+    alpha: 0.92
 
   # 导航栏菜单，可自行增减，key 用来关联 languages/*.yml，如不存在关联则显示 key 本身的值；icon 是 css class，可以省略；增加 name 可以强制显示指定名称
   # Navigation bar menu. `key` is used to associate languages/*.yml. If there is no association, the value of `key` itself will be displayed; if `icon` is a css class, it can be omitted; adding `name` can force the display of the specified name
@@ -526,24 +519,19 @@ index:
   # 头图高度，屏幕百分比
   # Height ratio of banner image
   # Available: 0 - 100
-  banner_img_height: 88
+  banner_img_height: 44
 
   # 头图黑色蒙版的不透明度，available: 0 - 1.0，1 是完全不透明
   # Opacity of the banner mask, 1.0 is completely opaque
   # Available: 0 - 1.0
-  banner_mask_alpha: 0.42
+  banner_mask_alpha: 0.30
 
   # 首页副标题的独立设置
   # Independent config of home page subtitle
   slogan:
     enable: true
-
-    # 为空则按 hexo config.subtitle 显示，支持列表格式来实现随机选择一行文字显示
-    # If empty, text based on `subtitle` in hexo config, support list format to random selection of a row for display
     text:
-      - 雾把清晨轻轻折起
-      - 一只鸟衔走半枚月光
-      - 我在风里听见花开
+      - 编程学习 · 项目实践 · 技术笔记
 
     # 通过 API 接口作为首页副标题的内容，必须返回的是 JSON 格式，如果请求失败则按 text 字段显示，该功能必须先开启 typing 打字机功能
     # Subtitle of the homepage through the API, must be returned a JSON. If the request fails, it will be displayed in `text` value. This feature must first enable the typing animation
@@ -597,12 +585,12 @@ index:
 #---------------------------
 post:
   banner_img: /img/home-banner.png
-  banner_img_height: 64
-  banner_mask_alpha: 0.46
+  banner_img_height: 48
+  banner_mask_alpha: 0.55
 
   # 文章在首页的默认封面图，当没有指定 index_img 时会使用该图片，若两者都为空则不显示任何图片
   # Path of the default post cover when `index_img` is not set. If both are empty, no image will be displayed
-  default_index_img: /img/home-banner.png
+  default_index_img:
 
   # 文章标题下方的元信息
   # Meta information below title

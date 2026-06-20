@@ -531,6 +531,141 @@ kbd {
 .stat-row span { color: var(--muted); font-size: 0.9rem; }
 .stat-row strong { font-size: 1.05rem; }
 
+/* GitHub 同步 */
+.publish-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+  gap: 1rem;
+  padding: 1.2rem;
+}
+.publish-card { margin: 0; }
+.publish-main-card { grid-row: span 2; }
+.publish-log-card { grid-column: 1 / -1; }
+.publish-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.publish-card-head.compact {
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+.publish-card-head h2 { margin: 0 0 0.4rem; }
+.publish-state {
+  flex: 0 0 auto;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.publish-status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.publish-status-item,
+.publish-site-row,
+.publish-meta-list > div {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.62);
+}
+.dark .publish-status-item,
+.dark .publish-site-row,
+.dark .publish-meta-list > div {
+  background: rgba(255, 255, 255, 0.04);
+}
+.publish-status-item {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.75rem 0.85rem;
+  min-width: 0;
+}
+.publish-status-item span,
+.publish-site-row span,
+.publish-meta-list span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.publish-status-item strong,
+.publish-meta-list strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.publish-site-row {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem 0.85rem;
+}
+.publish-site-row a {
+  color: var(--accent);
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+.publish-site-row a.disabled {
+  pointer-events: none;
+  color: var(--muted);
+}
+.publish-actions {
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+.publish-meta-list {
+  display: grid;
+  gap: 0.55rem;
+}
+.publish-meta-list > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.65rem 0.75rem;
+}
+.publish-meta-list strong {
+  text-align: right;
+}
+.status-good { color: var(--success) !important; }
+.status-warn { color: var(--warning) !important; }
+.publish-dirty-list {
+  display: grid;
+  gap: 0.45rem;
+  max-height: 220px;
+  overflow: auto;
+}
+.publish-dirty-list code {
+  display: block;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text-2);
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.publish-log {
+  min-height: 260px;
+  max-height: 360px;
+  margin: 0;
+  overflow: auto;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  background: #101827;
+  color: #c7d2fe;
+  font-family: Consolas, "Microsoft YaHei", monospace;
+  font-size: 0.82rem;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
 /* ========== Skill 对话 ========== */
 .skill-chat-layout {
   display: grid;
@@ -1107,6 +1242,9 @@ kbd { border-radius: 8px; background: rgba(79, 70, 229, 0.08); color: var(--acce
 @media (max-width: 960px) {
   .editor-layout { padding: 0.75rem; }
   .log-drawer { left: 0.75rem; right: 0.75rem; }
+  .publish-layout { grid-template-columns: 1fr; padding: 0.85rem; }
+  .publish-main-card,
+  .publish-log-card { grid-column: auto; grid-row: auto; }
 }
 @media (max-width: 640px) {
   .app { grid-template-rows: auto 1fr; }
@@ -1116,6 +1254,10 @@ kbd { border-radius: 8px; background: rgba(79, 70, 229, 0.08); color: var(--acce
   .card { margin: 0.85rem; }
   .action-bar { align-items: stretch; flex-direction: column; gap: 0.7rem; }
   .action-bar-right { flex-wrap: wrap; }
+  .publish-status-grid { grid-template-columns: 1fr; }
+  .publish-card-head,
+  .publish-meta-list > div { align-items: stretch; flex-direction: column; }
+  .publish-meta-list strong { text-align: left; }
 }
 
 /* ========== 细节增强 ========== */

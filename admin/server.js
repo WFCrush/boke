@@ -21,6 +21,7 @@ const trashDir = path.join(root, '.admin-trash', 'posts');
 const contactFile = path.join(root, 'source', 'contact', 'contact.json');
 const publicDir = path.join(__dirname, 'public');
 const hexoConfig = path.join(root, '_config.yml');
+const homeProfileFile = path.join(root, 'source', 'home-profile.json');
 const publishDir = path.join(root, 'public');
 const port = Number(process.env.PORT || process.env.ADMIN_PORT || 5050);
 const host = process.env.ADMIN_HOST || (process.env.PORT ? '0.0.0.0' : '127.0.0.1');
@@ -195,6 +196,31 @@ async function ensureDirs() {
   await fs.mkdir(backupDir, { recursive: true });
   await fs.mkdir(trashDir, { recursive: true });
   await fs.mkdir(path.dirname(contactFile), { recursive: true });
+  await fs.mkdir(path.dirname(homeProfileFile), { recursive: true });
+}
+
+async function readHomeProfile(fallbackIntro = '') {
+  try {
+    const parsed = JSON.parse(await fs.readFile(homeProfileFile, 'utf8'));
+    return {
+      intro: String(parsed.intro || fallbackIntro || '').trim(),
+      title: String(parsed.title || '').trim(),
+      kicker: String(parsed.kicker || '').trim(),
+    };
+  } catch (_) {
+    return { intro: String(fallbackIntro || '').trim(), title: '', kicker: '' };
+  }
+}
+
+async function writeHomeProfile(input, fallbackIntro = '') {
+  await fs.mkdir(path.dirname(homeProfileFile), { recursive: true });
+  const current = await readHomeProfile(fallbackIntro);
+  const next = {
+    ...current,
+    intro: String(input.intro ?? current.intro ?? fallbackIntro ?? '').trim(),
+  };
+  await fs.writeFile(homeProfileFile, `${JSON.stringify(next, null, 2)}\n`, 'utf8');
+  return next;
 }
 
 async function readPost(file) {
@@ -812,6 +838,136 @@ function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function stripYamlValue(value) {
+  return String(value || '').replace(/^['"]|['"]$/g, '').trim();
+}
+
+function readTopLevelYamlValue(text, key) {
+  const match = text.match(new RegExp(`^${key}:[ \\t]*(.+?)\\s*$`, 'm'));
+  return match ? stripYamlValue(match[1]) : '';
+}
+
+function ensureTrailingSlash(value) {
+  const text = String(value || '').trim();
+  return text && !text.endsWith('/') ? `${text}/` : text;
+}
+
+function normalizeRootPath(value) {
+  const cleaned = stripYamlValue(value) || '/';
+  const withLeading = cleaned.startsWith('/') ? cleaned : `/${cleaned}`;
+  return ensureTrailingSlash(withLeading);
+}
+
+function composeSiteUrl(rawUrl, rootPath) {
+  const cleaned = stripYamlValue(rawUrl);
+  if (!cleaned) return '';
+  try {
+    const url = new URL(cleaned);
+    const normalizedRoot = normalizeRootPath(rootPath);
+    if (normalizedRoot !== '/' && (!url.pathname || url.pathname === '/')) {
+      url.pathname = normalizedRoot;
+    }
+    return ensureTrailingSlash(url.href);
+  } catch (_) {
+    return ensureTrailingSlash(cleaned);
+  }
+}
+
+function parseGitHubRemote(remoteUrl) {
+  const cleaned = String(remoteUrl || '').trim();
+  let match = cleaned.match(/^https?:\/\/(?:[^@\s/]+@)?github\.com\/([^/\s]+)\/([^/\s]+?)(?:\.git)?\/?$/i);
+  if (!match) match = cleaned.match(/^git@github\.com:([^/\s]+)\/([^/\s]+?)(?:\.git)?$/i);
+  if (!match) match = cleaned.match(/^ssh:\/\/git@github\.com\/([^/\s]+)\/([^/\s]+?)(?:\.git)?\/?$/i);
+  if (!match) return { owner: '', repo: '', repoPath: '', repoUrl: '', actionsUrl: '' };
+  const owner = match[1];
+  const repo = match[2].replace(/\.git$/i, '');
+  return {
+    owner,
+    repo,
+    repoPath: `${owner}/${repo}`,
+    repoUrl: `https://github.com/${owner}/${repo}`,
+    actionsUrl: `https://github.com/${owner}/${repo}/actions/workflows/pages.yml`,
+  };
+}
+
+function inferGitHubPagesUrl(owner, repo) {
+  if (!owner || !repo) return '';
+  if (repo.toLowerCase() === `${owner.toLowerCase()}.github.io`) {
+    return `https://${repo}/`;
+  }
+  return `https://${owner.toLowerCase()}.github.io/${repo}/`;
+}
+
+async function readHexoSiteInfo() {
+  try {
+    const config = await fs.readFile(hexoConfig, 'utf8');
+    const rootPath = normalizeRootPath(readTopLevelYamlValue(config, 'root') || '/');
+    const url = readTopLevelYamlValue(config, 'url');
+    return {
+      configuredUrl: url,
+      rootPath,
+      siteUrl: composeSiteUrl(url, rootPath),
+    };
+  } catch (_) {
+    return { configuredUrl: '', rootPath: '/', siteUrl: '' };
+  }
+}
+
+async function gitOutput(args) {
+  const result = await execPlain('git', args);
+  return result.ok ? result.output.trim() : '';
+}
+
+async function readGitHubRemoteInfo() {
+  const remoteUrl = await gitOutput(['remote', 'get-url', 'origin']);
+  return { remoteUrl, ...parseGitHubRemote(remoteUrl) };
+}
+
+async function getCredentialToken() {
+  const result = await runWithInput('git', ['credential', 'fill'], 'protocol=https\nhost=github.com\n\n');
+  const match = result.output.match(/^password=(.+)$/m);
+  return match ? match[1].trim() : '';
+}
+
+async function collectPublishStatus(options = {}) {
+  const { includeRun = true } = options;
+  const remote = await readGitHubRemoteInfo();
+  const site = await readHexoSiteInfo();
+  const branch = (await gitOutput(['branch', '--show-current'])) || (await gitOutput(['rev-parse', '--abbrev-ref', 'HEAD']));
+  const headSha = await gitOutput(['rev-parse', 'HEAD']);
+  const headMessage = await gitOutput(['log', '-1', '--pretty=%s']);
+  const branchStatus = await gitOutput(['status', '--short', '--branch']);
+  const dirtyText = await gitOutput(['status', '--short']);
+  const dirtyFiles = dirtyText ? dirtyText.split(/\r?\n/).filter(Boolean) : [];
+  const credentialReady = Boolean(await getCredentialToken().catch(() => ''));
+  const siteUrl = site.siteUrl || inferGitHubPagesUrl(remote.owner, remote.repo);
+  const status = {
+    ...remote,
+    branch,
+    headSha,
+    shortSha: headSha ? headSha.slice(0, 7) : '',
+    headMessage,
+    branchStatus,
+    dirtyFiles,
+    dirtyCount: dirtyFiles.length,
+    credentialReady,
+    siteUrl,
+    rootPath: site.rootPath,
+    configuredUrl: site.configuredUrl,
+    latestRun: null,
+    latestRunError: '',
+    checkedAt: new Date().toISOString(),
+  };
+  if (includeRun && remote.owner && remote.repo && credentialReady) {
+    try {
+      status.latestRun = await latestPagesRun(status);
+    } catch (error) {
+      status.latestRunError = error.message;
+    }
+  }
+  return status;
+}
+
 function makeJob() {
   const id = crypto.randomBytes(12).toString('hex');
   const job = { id, status: 'running', logs: [], startedAt: new Date().toISOString(), siteOk: false };
@@ -853,14 +1009,6 @@ function runStreaming(job, command, args, options = {}) {
   });
 }
 
-async function getCredentialToken() {
-  const result = await run('git', ['credential', 'fill'], {
-    input: 'protocol=https\nhost=github.com\n\n',
-  });
-  const match = result.output.match(/^password=(.+)$/m);
-  return match ? match[1].trim() : '';
-}
-
 function runWithInput(command, args, input) {
   return new Promise((resolve) => {
     const child = spawn(command, args, { cwd: root, shell: true });
@@ -885,8 +1033,7 @@ function execPlain(command, args) {
 }
 
 async function githubRequest(pathname, options = {}) {
-  const tokenResult = await runWithInput('git', ['credential', 'fill'], 'protocol=https\nhost=github.com\n\n');
-  const token = (tokenResult.output.match(/^password=(.+)$/m) || [])[1];
+  const token = await getCredentialToken();
   if (!token) throw new Error('没有找到 GitHub 登录凭据');
   const res = await fetch(`https://api.github.com${pathname}`, {
     ...options,
@@ -903,13 +1050,17 @@ async function githubRequest(pathname, options = {}) {
   return text ? JSON.parse(text) : null;
 }
 
-async function latestPagesRun() {
-  const data = await githubRequest('/repos/WFCrush/boke/actions/workflows/pages.yml/runs?per_page=1');
+async function latestPagesRun(context) {
+  const owner = context && context.owner;
+  const repo = context && context.repo;
+  if (!owner || !repo) return null;
+  const data = await githubRequest(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/actions/workflows/pages.yml/runs?per_page=1`);
   return data.workflow_runs && data.workflow_runs[0];
 }
 
-async function checkPublicSite() {
-  const res = await fetch('https://wfcrush.github.io/boke/', { cache: 'no-store' });
+async function checkPublicSite(siteUrl) {
+  if (!siteUrl) return false;
+  const res = await fetch(siteUrl, { cache: 'no-store' });
   return res.ok;
 }
 
@@ -929,40 +1080,53 @@ async function latestPostExpectation() {
   }
 }
 
-async function publicSiteContains(text) {
+async function publicSiteContains(text, siteUrl) {
   if (!text) return true;
-  const res = await fetch(`https://wfcrush.github.io/boke/?v=${Date.now()}`, { cache: 'no-store' });
+  if (!siteUrl) return false;
+  const joiner = siteUrl.includes('?') ? '&' : '?';
+  const res = await fetch(`${siteUrl}${joiner}v=${Date.now()}`, { cache: 'no-store' });
   if (!res.ok) return false;
   const html = await res.text();
   return html.includes(text);
 }
 
-async function waitForDeployment(job, expectedSha) {
+async function waitForDeployment(job, expectedSha, context) {
+  const publishContext = context || await collectPublishStatus({ includeRun: false });
   addLog(job, '正在监测 GitHub Pages 自动部署...');
   let lastId = '';
-  for (let i = 0; i < 60; i += 1) {
-    const runInfo = await latestPagesRun();
-    if (runInfo) {
-      lastId = runInfo.id;
-      job.actionsUrl = runInfo.html_url;
-      const shortSha = String(runInfo.head_sha || '').slice(0, 7);
-      addLog(job, `GitHub Actions: ${runInfo.status}${runInfo.conclusion ? ` / ${runInfo.conclusion}` : ''} (${shortSha})`);
-      if (expectedSha && runInfo.head_sha !== expectedSha) {
-        addLog(job, '等待当前提交触发新的部署...');
-      } else if (runInfo.status === 'completed') {
-        if (runInfo.conclusion !== 'success') throw new Error(`GitHub Actions 部署失败：${runInfo.html_url}`);
+  if (publishContext.owner && publishContext.repo) {
+    for (let i = 0; i < 60; i += 1) {
+      let runInfo = null;
+      try {
+        runInfo = await latestPagesRun(publishContext);
+      } catch (error) {
+        addLog(job, `暂时无法读取 GitHub Actions 状态：${error.message}`);
         break;
       }
+      if (runInfo) {
+        lastId = runInfo.id;
+        job.actionsUrl = runInfo.html_url;
+        const shortSha = String(runInfo.head_sha || '').slice(0, 7);
+        addLog(job, `GitHub Actions: ${runInfo.status}${runInfo.conclusion ? ` / ${runInfo.conclusion}` : ''} (${shortSha})`);
+        if (expectedSha && runInfo.head_sha !== expectedSha) {
+          addLog(job, '等待当前提交触发新的部署...');
+        } else if (runInfo.status === 'completed') {
+          if (runInfo.conclusion !== 'success') throw new Error(`GitHub Actions 部署失败：${runInfo.html_url}`);
+          break;
+        }
+      }
+      await wait(5000);
     }
-    await wait(5000);
+  } else {
+    addLog(job, '没有识别到 GitHub origin 仓库，跳过 Actions 状态监测。');
   }
 
   const expectedTitle = await latestPostExpectation();
   addLog(job, expectedTitle ? `正在检测公开博客是否出现文章：${expectedTitle}` : '正在检测公开博客是否可访问...');
   for (let i = 0; i < 18; i += 1) {
-    if ((await checkPublicSite()) && (await publicSiteContains(expectedTitle))) {
+    if ((await checkPublicSite(publishContext.siteUrl)) && (await publicSiteContains(expectedTitle, publishContext.siteUrl))) {
       job.siteOk = true;
-      addLog(job, '公开博客已经可以访问：https://wfcrush.github.io/boke/');
+      addLog(job, `公开博客已经可以访问：${publishContext.siteUrl}`);
       return;
     }
     addLog(job, '公开博客暂未刷新，继续等待...');
@@ -973,6 +1137,9 @@ async function waitForDeployment(job, expectedSha) {
 
 async function runPublishJob(job) {
   try {
+    const publishContext = await collectPublishStatus({ includeRun: false });
+    if (publishContext.repoPath) addLog(job, `同步仓库：${publishContext.repoPath}`);
+    if (publishContext.siteUrl) addLog(job, `公开站点：${publishContext.siteUrl}`);
     const build = await runStreaming(job, npmCommand, ['run', 'build']);
     if (!build.ok) throw new Error('本地构建失败');
 
@@ -1005,7 +1172,7 @@ async function runPublishJob(job) {
 
     const head = await runStreaming(job, 'git', ['rev-parse', 'HEAD']);
     const expectedSha = head.output.trim().split(/\r?\n/).pop();
-    await waitForDeployment(job, expectedSha);
+    await waitForDeployment(job, expectedSha, publishContext);
     job.status = 'success';
     addLog(job, '发布完成，其他人刷新公开博客即可看到。');
   } catch (error) {
@@ -1256,14 +1423,18 @@ app.get('/api/site-config', auth, async (_req, res) => {
       const m = text.match(new RegExp(`^${key}:[ \\t]*(.+?)\\s*$`, 'm'));
       return m ? m[1].replace(/^['"]|['"]$/g, '').trim() : '';
     };
+    const description = matchTop(main, 'description');
+    const aboutIntro = readFieldUnderSection(fluid, 'about', 'intro');
+    const homeProfile = await readHomeProfile(aboutIntro || description);
     res.json({
       title: matchTop(main, 'title'),
       subtitle: matchTop(main, 'subtitle'),
-      description: matchTop(main, 'description'),
+      description,
       author: matchTop(main, 'author'),
       navbarTitle: readFieldUnderSection(fluid, 'navbar', 'blog_title'),
       aboutName: readFieldUnderSection(fluid, 'about', 'name'),
-      aboutIntro: readFieldUnderSection(fluid, 'about', 'intro'),
+      aboutIntro,
+      homeIntro: homeProfile.intro,
       slogans: readSloganList(fluid),
     });
   } catch (error) {
@@ -1290,14 +1461,27 @@ app.put('/api/site-config', auth, async (req, res) => {
     setIf(body.author, (v) => { main = replaceTopLevelField(main, 'author', v); });
     setIf(body.navbarTitle, (v) => { fluid = replaceFieldUnderSection(fluid, 'navbar', 'blog_title', v); });
     setIf(body.aboutName, (v) => { fluid = replaceFieldUnderSection(fluid, 'about', 'name', v); });
-    setIf(body.aboutIntro, (v) => { fluid = replaceFieldUnderSection(fluid, 'about', 'intro', v); });
+    let homeIntro = null;
+    setIf(body.aboutIntro, (v) => {
+      fluid = replaceFieldUnderSection(fluid, 'about', 'intro', v);
+      homeIntro = v;
+    });
+    setIf(body.homeIntro, (v) => { homeIntro = v; });
     if (Array.isArray(body.slogans)) {
       const cleaned = body.slogans.map((s) => String(s || '').trim()).filter(Boolean);
       fluid = replaceSloganList(fluid, cleaned);
     }
     await fs.writeFile(hexoConfig, main, 'utf8');
     await fs.writeFile(fluidPath, fluid, 'utf8');
-    res.json({ ok: true });
+    if (homeIntro !== null) {
+      await writeHomeProfile({ intro: homeIntro }, readFieldUnderSection(fluid, 'about', 'intro'));
+    }
+    const currentHomeProfile = await readHomeProfile(readFieldUnderSection(fluid, 'about', 'intro'));
+    res.json({
+      ok: true,
+      homeIntro: currentHomeProfile.intro,
+      aboutIntro: readFieldUnderSection(fluid, 'about', 'intro'),
+    });
   } catch (error) {
     res.status(500).json({ error: `保存站点配置失败：${error.message}` });
   }
@@ -1544,6 +1728,14 @@ app.post('/api/publish', auth, async (_req, res) => {
   addLog(job, '发布任务已创建。');
   runPublishJob(job);
   res.json({ jobId: job.id });
+});
+
+app.get('/api/publish/status', auth, async (_req, res) => {
+  try {
+    res.json(await collectPublishStatus());
+  } catch (error) {
+    res.status(500).json({ error: `读取发布状态失败：${error.message}` });
+  }
 });
 
 app.get('/api/jobs/:id', auth, (req, res) => {

@@ -13,6 +13,7 @@
       button.className = 'boke-contact-button';
       button.type = 'button';
       button.textContent = '联系';
+      button.setAttribute('aria-label', '打开联系方式');
 
       var panel = document.createElement('div');
       panel.className = 'boke-contact-panel';
@@ -25,7 +26,9 @@
       ].join('');
 
       button.addEventListener('click', function () {
-        panel.classList.toggle('is-open');
+        var open = !panel.classList.contains('is-open');
+        panel.classList.toggle('is-open', open);
+        button.setAttribute('aria-expanded', open ? 'true' : 'false');
       });
       document.body.appendChild(panel);
       document.body.appendChild(button);

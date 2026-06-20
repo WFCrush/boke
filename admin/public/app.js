@@ -8,6 +8,7 @@ let isDirty = false;
 let autosaveTimer = null;
 let skillMessages = [];
 let skillBusy = false;
+let publishStatusCache = null;
 
 const $ = (id) => document.getElementById(id);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -48,6 +49,10 @@ function confirmDialog(title, message, danger = true) {
 function log(message) {
   $('log').textContent = typeof message === 'string' ? message : JSON.stringify(message, null, 2);
   $('log').scrollTop = $('log').scrollHeight;
+  if ($('publishLog')) {
+    $('publishLog').textContent = $('log').textContent;
+    $('publishLog').scrollTop = $('publishLog').scrollHeight;
+  }
   // 有日志输出时自动展开抽屉
   if ($('logDrawer').classList.contains('collapsed') && message && !message.includes('就绪')) {
     $('logDrawer').classList.remove('collapsed');
@@ -566,7 +571,7 @@ async function loadSiteConfig() {
     $('cfgDescription').value = cfg.description || '';
     $('cfgAuthor').value = cfg.author || '';
     $('cfgAboutName').value = cfg.aboutName || '';
-    $('cfgAboutIntro').value = cfg.aboutIntro || '';
+    $('cfgAboutIntro').value = cfg.homeIntro || cfg.aboutIntro || '';
     $('cfgSlogans').value = (cfg.slogans || []).join('\n');
   } catch (error) {
     toast('读取配置失败：' + error.message, 'error');
@@ -576,7 +581,7 @@ async function loadSiteConfig() {
 async function saveSiteConfig() {
   const slogans = $('cfgSlogans').value.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
   try {
-    await api('/api/site-config', {
+    const data = await api('/api/site-config', {
       method: 'PUT',
       body: JSON.stringify({
         title: $('cfgTitle').value,
@@ -585,9 +590,13 @@ async function saveSiteConfig() {
         author: $('cfgAuthor').value,
         aboutName: $('cfgAboutName').value,
         aboutIntro: $('cfgAboutIntro').value,
+        homeIntro: $('cfgAboutIntro').value,
         slogans,
       }),
     });
+    if (data && typeof data.homeIntro === 'string') {
+      $('cfgAboutIntro').value = data.homeIntro;
+    }
     toast('个人信息已保存，记得去“写作”页发布上线', 'success', 3000);
   } catch (error) {
     toast('个人信息保存失败：' + error.message, 'error', 6000);
@@ -767,13 +776,95 @@ function clearSkillChat() {
   renderSkillMessages();
 }
 
+// ===== GitHub 同步 =====
+function formatRunStatus(run) {
+  if (!run) return '暂无记录';
+  return `${run.status || '-'}${run.conclusion ? ` / ${run.conclusion}` : ''}`;
+}
+
+function formatTimeText(value) {
+  if (!value) return '-';
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return String(value);
+  return formatDateText(d);
+}
+
+function setPublishLink(id, url, fallback = '-') {
+  const el = $(id);
+  if (!el) return;
+  if (url) {
+    el.href = url;
+    el.textContent = url;
+    el.classList.remove('disabled');
+  } else {
+    el.href = '#';
+    el.textContent = fallback;
+    el.classList.add('disabled');
+  }
+}
+
+function openPublishUrl(kind) {
+  const data = publishStatusCache || {};
+  const url = kind === 'site' ? data.siteUrl : kind === 'actions' ? data.actionsUrl : data.repoUrl;
+  if (url) window.open(url, '_blank', 'noopener');
+  else toast('还没有读取到可打开的地址', 'info');
+}
+
+function renderPublishStatus(data) {
+  publishStatusCache = data || {};
+  const run = publishStatusCache.latestRun;
+  $('publishRepo').textContent = publishStatusCache.repoPath || '未识别';
+  $('publishBranch').textContent = publishStatusCache.branch || '-';
+  $('publishHead').textContent = publishStatusCache.shortSha
+    ? `${publishStatusCache.shortSha} ${publishStatusCache.headMessage || ''}`.trim()
+    : '-';
+  $('publishDirty').textContent = `${publishStatusCache.dirtyCount || 0} 个文件`;
+  $('publishCredential').textContent = publishStatusCache.credentialReady ? '可用' : '未检测到';
+  $('publishCredential').className = publishStatusCache.credentialReady ? 'status-good' : 'status-warn';
+  $('publishRunStatus').textContent = formatRunStatus(run);
+  $('publishRunTime').textContent = formatTimeText(run && (run.updated_at || run.created_at));
+  $('publishRoot').textContent = publishStatusCache.rootPath || '/';
+  setPublishLink('publishSite', publishStatusCache.siteUrl, '-');
+
+  const dirtyList = $('publishDirtyList');
+  const files = publishStatusCache.dirtyFiles || [];
+  dirtyList.innerHTML = files.length
+    ? files.map((file) => `<code>${escapeHtml(file)}</code>`).join('')
+    : '<span class="muted">当前没有未提交改动。</span>';
+
+  const runError = $('publishRunError');
+  if (publishStatusCache.latestRunError) {
+    runError.textContent = publishStatusCache.latestRunError;
+    runError.classList.remove('hidden');
+  } else {
+    runError.textContent = '';
+    runError.classList.add('hidden');
+  }
+}
+
+async function loadPublishStatus(silent = false) {
+  try {
+    if (!silent && $('publishJobState')) $('publishJobState').textContent = '刷新中';
+    const data = await api('/api/publish/status');
+    renderPublishStatus(data);
+    if ($('publishJobState')) $('publishJobState').textContent = '就绪';
+    return data;
+  } catch (error) {
+    if ($('publishJobState')) $('publishJobState').textContent = '读取失败';
+    if (!silent) toast(`读取同步状态失败：${error.message}`, 'error');
+    return null;
+  }
+}
+
 // ===== 发布 =====
-async function startPublish() {
-  if (isDirty || !currentFile) {
+async function startPublish(options = {}) {
+  const { saveCurrent = true } = options;
+  if (saveCurrent && (isDirty || !currentFile)) {
     const post = await savePost(true);
     if (!post) return;
   }
   $('jobState').textContent = '发布中';
+  if ($('publishJobState')) $('publishJobState').textContent = '同步中';
   $('logDrawer').classList.remove('collapsed');
   $('logToggle').textContent = '▼';
   log('正在创建发布任务...');
@@ -786,15 +877,19 @@ async function startPublish() {
         log(job.logs.join('\n'));
         if (job.status === 'success') {
           clearInterval(timer);
+          if ($('publishJobState')) $('publishJobState').textContent = '同步完成';
           toast('发布成功！', 'success', 3000);
           await loadPosts();
+          await loadPublishStatus(true);
         } else if (job.status === 'failed') {
           clearInterval(timer);
+          if ($('publishJobState')) $('publishJobState').textContent = '同步失败';
           toast('发布失败，查看日志', 'error', 4000);
         }
       } catch (error) {
         clearInterval(timer);
         $('jobState').textContent = '错误';
+        if ($('publishJobState')) $('publishJobState').textContent = '错误';
         log(error.message);
       }
     }, 1500);
@@ -810,6 +905,7 @@ function switchTab(tab) {
   $$('.nav-tab').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
   $$('.tab-panel').forEach((p) => p.classList.toggle('active', p.dataset.panel === tab));
   if (tab === 'site') loadSiteConfig();
+  if (tab === 'publish') loadPublishStatus();
   if (tab === 'skill-chat') { loadSkillStatus(); renderSkillMessages(); }
   if (tab === 'more') { loadContact(); loadTrash(); }
   if (tab === 'posts') renderPostTable();
@@ -910,6 +1006,18 @@ function bindEvents() {
   // 站点配置
   $('saveSiteCfg').onclick = saveSiteConfig;
   $('reloadSiteCfg').onclick = loadSiteConfig;
+
+  // GitHub 同步
+  $('publishSyncBtn').onclick = () => startPublish({ saveCurrent: false }).catch((e) => log(e.message));
+  $('refreshPublishStatus').onclick = () => loadPublishStatus();
+  $('publishOpenSite').onclick = () => openPublishUrl('site');
+  $('publishOpenRepo').onclick = () => openPublishUrl('repo');
+  $('publishOpenActions').onclick = () => openPublishUrl('actions');
+  $('clearPublishLog').onclick = () => {
+    log('准备就绪。');
+    $('jobState').textContent = '就绪';
+    $('publishJobState').textContent = '就绪';
+  };
 
   // 联系方式
   $('saveContact').onclick = saveContact;

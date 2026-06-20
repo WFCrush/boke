@@ -26,6 +26,61 @@
     return node ? node.textContent.replace(/\s+/g, ' ').trim() : '';
   }
 
+  function metaContent(selector) {
+    var node = document.querySelector(selector);
+    return node ? (node.getAttribute('content') || '').trim() : '';
+  }
+
+  function defaultHomeProfile() {
+    var subtitle = document.getElementById('subtitle');
+    var typedSubtitle = subtitle ? (text(subtitle) || subtitle.getAttribute('data-typed-text') || '') : '';
+    return {
+      kicker: 'NOTEBOOK',
+      title: '近期笔记与个人实践',
+      intro: metaContent('meta[name="description"]') ||
+        metaContent('meta[property="og:description"]') ||
+        typedSubtitle ||
+        '记录学习、项目和日常复盘。'
+    };
+  }
+
+  function normalizeHomeProfile(profile) {
+    var fallback = defaultHomeProfile();
+    profile = profile || {};
+    return {
+      kicker: String(profile.kicker || fallback.kicker).trim(),
+      title: String(profile.title || fallback.title).trim(),
+      intro: String(profile.intro || profile.summary || fallback.intro).trim()
+    };
+  }
+
+  function applyHomeProfile(profile) {
+    var normalized = normalizeHomeProfile(profile);
+    var shell = document.querySelector('.home-premium-shell');
+    if (!shell) return;
+    var kicker = shell.querySelector('.home-premium-kicker');
+    var title = shell.querySelector('.home-premium-title');
+    var summary = shell.querySelector('.home-premium-summary');
+    if (kicker && normalized.kicker) kicker.textContent = normalized.kicker;
+    if (title && normalized.title) title.textContent = normalized.title;
+    if (summary && normalized.intro) summary.textContent = normalized.intro;
+  }
+
+  var homeProfilePromise = null;
+  function loadHomeProfile() {
+    if (!homeProfilePromise) {
+      homeProfilePromise = fetch(siteRoot() + 'home-profile.json', { cache: 'no-store' })
+        .then(function (res) {
+          if (!res.ok) throw new Error('home profile not found');
+          return res.json();
+        })
+        .catch(function () {
+          return defaultHomeProfile();
+        });
+    }
+    return homeProfilePromise;
+  }
+
   function make(tag, className, value) {
     var node = document.createElement(tag);
     if (className) node.className = className;
@@ -138,7 +193,7 @@
   }
 
   function appendLatest(list, posts) {
-    posts.slice(0, 4).forEach(function (post, index) {
+    posts.slice(0, 3).forEach(function (post, index) {
       var item = make('li', 'home-premium-latest-item');
       item.appendChild(make('span', 'home-premium-latest-index', String(index + 1).padStart(2, '0')));
       var body = make('div', 'home-premium-latest-body');
@@ -164,8 +219,7 @@
       list.appendChild(item);
     });
     if (!categories.length) {
-      var empty = make('li', 'home-premium-empty', '发布文章并设置分类后，这里会自动形成专题入口。');
-      list.appendChild(empty);
+      list.appendChild(make('li', 'home-premium-empty', '发布文章并设置分类后，这里会自动形成专题入口。'));
     }
   }
 
@@ -178,8 +232,7 @@
       list.appendChild(item);
     });
     if (!tags.length) {
-      var empty = make('li', 'home-premium-empty', '设置标签后，这里会自动聚合技术关键词。');
-      list.appendChild(empty);
+      list.appendChild(make('li', 'home-premium-empty', '设置标签后，这里会自动聚合技术关键词。'));
     }
   }
 
@@ -196,9 +249,10 @@
 
     var overview = make('div', 'home-premium-overview');
     var intro = make('div', 'home-premium-intro');
-    intro.appendChild(make('p', 'home-premium-kicker', 'TECH KNOWLEDGE BASE'));
-    intro.appendChild(make('h2', 'home-premium-title', '从最新记录进入完整的技术知识库'));
-    intro.appendChild(make('p', 'home-premium-summary', '这里把部署实践、学习笔记、建模记录和日常复盘聚合成可检索的入口。先看最新脉络，再沿着专题和标签深入。'));
+    var profile = defaultHomeProfile();
+    intro.appendChild(make('p', 'home-premium-kicker', profile.kicker));
+    intro.appendChild(make('h2', 'home-premium-title', profile.title));
+    intro.appendChild(make('p', 'home-premium-summary', profile.intro));
 
     var actions = make('div', 'home-premium-actions');
     var root = siteRoot();
@@ -251,7 +305,7 @@
     var head = make('div', 'home-premium-list-head');
     var copy = make('div', 'home-premium-list-copy');
     copy.appendChild(make('h2', 'home-premium-list-title', '最新知识流'));
-    copy.appendChild(make('p', 'home-premium-list-subtitle', '按时间和主题扫读文章，快速判断下一篇要深入的内容。'));
+    copy.appendChild(make('p', 'home-premium-list-subtitle', '按时间和主题扫描文章，快速判断下一篇要深入的内容。'));
     var density = make('div', 'home-premium-list-density');
     density.appendChild(make('span', 'home-premium-density-pill', posts.length + ' 篇可读'));
     density.appendChild(make('span', 'home-premium-density-pill', stats.categories.length + ' 个专题'));
@@ -268,6 +322,7 @@
       card.dataset.homePremiumReady = 'true';
       card.classList.add('home-premium-post-card');
       if (index === 0) card.classList.add('home-premium-post-card-featured');
+      if (!card.querySelector('.index-img img')) card.classList.add('home-premium-card-no-cover');
 
       var info = card.querySelector('.index-info');
       var header = card.querySelector('.index-header');
@@ -325,6 +380,7 @@
 
     var stats = collectStats(posts);
     buildOverview(posts, stats);
+    loadHomeProfile().then(applyHomeProfile);
     buildListHead(posts, stats);
     enhanceCards(posts);
     buildSidebar(stats);
