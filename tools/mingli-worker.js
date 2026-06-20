@@ -3,7 +3,7 @@
 
 const API_KEY = 'sk-Tz8ULzbBZgjj9hAjAtjvTz39lww0LiUbduxc4c4wnOOlN9Y3';
 const BASE_URL = 'https://aiapi.yjsnpitext1145141.top/v1';
-const MODEL = '纯真';
+const MODEL = 'claude-opus-4-6';
 
 const SYSTEM_PROMPT = `你是一位紫微斗数命理师，融合三合派与中州派解盘风格。
 
@@ -48,34 +48,37 @@ export default {
 
     if (!userMsg) return json({ error: '缺少生辰信息' }, 400);
 
-    try {
-      const resp = await fetch(`${BASE_URL}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
-            { role: 'user', content: userMsg },
-          ],
-          temperature: 0.7,
-          max_tokens: 2000,
-        }),
-      });
+    const resp = await fetch(`${BASE_URL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userMsg },
+        ],
+        temperature: 0.7,
+        max_tokens: 2000,
+        stream: true,
+      }),
+    });
 
-      const data = await resp.json();
-      if (!resp.ok) return json({ error: data?.error?.message || '模型接口错误' }, 502);
-
-      const content = data?.choices?.[0]?.message?.content?.trim();
-      if (!content) return json({ error: '模型未返回内容' }, 502);
-
-      return json({ content });
-    } catch {
-      return json({ error: '请求超时或网络错误' }, 504);
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      return json({ error: err?.error?.message || '模型接口错误' }, 502);
     }
+
+    // 透传 SSE 流
+    return new Response(resp.body, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        ...CORS,
+      },
+    });
   },
 };
 
