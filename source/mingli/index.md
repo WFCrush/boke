@@ -4,7 +4,29 @@ date: 2026-06-20
 layout: page
 ---
 
-<div id="mingli-app" style="max-width:600px;margin:0 auto">
+<style>
+#mingli-app{max-width:620px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.mc{background:#fff;border-radius:14px;padding:18px 22px;margin:12px 0;box-shadow:0 2px 14px rgba(0,0,0,.07);border-left:5px solid #ddd;transition:box-shadow .2s}
+.mc:hover{box-shadow:0 4px 20px rgba(0,0,0,.12)}
+.mc-t{font-size:1.05em;font-weight:700;margin-bottom:10px}
+.mc-b{color:#444;line-height:1.9;font-size:.94em}
+.mc-b p{margin:0 0 8px}
+.mc-b ul,.mc-b ol{padding-left:20px;margin:6px 0}
+.mc-b li{margin-bottom:4px}
+.mc-b strong{color:#222}
+.mc-b blockquote{border-left:3px solid #e0e0e0;margin:10px 0;padding:6px 14px;color:#666;background:#fafafa;border-radius:0 6px 6px 0}
+.mc-intro{color:#777;font-size:.9em;text-align:center;padding:4px 0 10px}
+.mc-intro p{margin:4px 0}
+#result-header{display:none;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-radius:14px;padding:20px 24px;margin-bottom:4px;text-align:center}
+#result-header h3{margin:0 0 4px;font-size:1.1em;font-weight:600;opacity:.9}
+#result-header p{margin:0;font-size:.9em;opacity:.75}
+#thinking-bar{display:none;text-align:center;padding:32px 0;color:#aaa;font-size:.9em}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#bbb;margin:0 3px;animation:pulse 1.2s infinite}
+.dot:nth-child(2){animation-delay:.4s}.dot:nth-child(3){animation-delay:.8s}
+@keyframes pulse{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
+</style>
+
+<div id="mingli-app">
 
 <form id="mingli-form" style="display:flex;flex-direction:column;gap:12px">
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -29,13 +51,19 @@ layout: page
       <option>男</option><option>女</option>
     </select>
   </label>
-  <button type="submit" id="submit-btn" style="padding:10px;cursor:pointer">开始解读</button>
+  <button type="submit" id="submit-btn" style="padding:11px;cursor:pointer;border-radius:8px;border:none;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;font-size:1em;font-weight:600">开始解读</button>
 </form>
 
-<div id="result" style="margin-top:24px;display:none">
-  <div id="result-thinking" style="color:#888;font-size:0.9em;margin-bottom:8px;display:none">AI 思考中，请稍候（约30秒）...</div>
-  <div id="result-content" style="line-height:1.8"></div>
+<div id="thinking-bar">
+  <div style="margin-bottom:8px">AI 正在推演星盘</div>
+  <div><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
 </div>
+
+<div id="result-header">
+  <h3>命盘解读报告</h3>
+  <p id="result-subtitle"></p>
+</div>
+<div id="result-content" style="margin-top:4px"></div>
 
 </div>
 
@@ -43,79 +71,101 @@ layout: page
 <script>
 const WORKER_URL = 'https://mingli.zyn6915060.workers.dev';
 
-function renderContent(text) {
-  const div = document.getElementById('result-content');
-  div.innerHTML = typeof marked !== 'undefined' ? marked.parse(text) : text.replace(/\n/g, '<br>');
+const COLORS = {
+  '性格':'#9b59b6','命盘':'#9b59b6','先天':'#9b59b6',
+  '事业':'#3498db','职业':'#3498db','工作':'#3498db',
+  '财运':'#e67e22','财':'#e67e22','钱':'#e67e22',
+  '感情':'#e74c3c','爱情':'#e74c3c','婚姻':'#e74c3c',
+  '运势':'#27ae60','流年':'#27ae60','大限':'#27ae60','近期':'#27ae60','近年':'#27ae60',
+};
+function getColor(t){for(const[k,v]of Object.entries(COLORS))if(t.includes(k))return v;return'#7f8c8d';}
+
+function render(md){
+  const parts = md.split(/(?=^## )/m);
+  let html = '';
+  for(const part of parts){
+    if(!part.trim()) continue;
+    if(part.startsWith('## ')){
+      const nl = part.indexOf('\n');
+      const rawTitle = nl>0 ? part.slice(3,nl) : part.slice(3);
+      const body = nl>0 ? part.slice(nl+1).trim() : '';
+      const c = getColor(rawTitle);
+      html += `<div class="mc" style="border-left-color:${c}">
+        <div class="mc-t" style="color:${c}">${rawTitle}</div>
+        ${body ? `<div class="mc-b">${marked.parse(body)}</div>` : ''}
+      </div>`;
+    } else {
+      const parsed = marked.parse(part.trim());
+      if(parsed.trim()) html += `<div class="mc-intro">${parsed}</div>`;
+    }
+  }
+  document.getElementById('result-content').innerHTML = html;
 }
 
-document.getElementById('mingli-form').addEventListener('submit', async (e) => {
+document.getElementById('mingli-form').addEventListener('submit', async(e)=>{
   e.preventDefault();
   const btn = document.getElementById('submit-btn');
-  const resultDiv = document.getElementById('result');
-  const thinkingDiv = document.getElementById('result-thinking');
-  const contentDiv = document.getElementById('result-content');
+  const thinking = document.getElementById('thinking-bar');
+  const header = document.getElementById('result-header');
+  const subtitle = document.getElementById('result-subtitle');
+  const content = document.getElementById('result-content');
 
-  btn.disabled = true;
-  btn.textContent = '解读中...';
-  contentDiv.innerHTML = '';
-  thinkingDiv.style.display = 'none';
-  resultDiv.style.display = 'block';
+  const year=document.getElementById('year').value;
+  const month=document.getElementById('month').value;
+  const day=document.getElementById('day').value;
+  const hour=document.getElementById('hour').value;
+  const gender=document.getElementById('gender').value;
 
-  let fullText = '';
-  try {
-    const resp = await fetch(WORKER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        year: document.getElementById('year').value,
-        month: document.getElementById('month').value,
-        day: document.getElementById('day').value,
-        hour: document.getElementById('hour').value,
-        gender: document.getElementById('gender').value,
-      }),
+  btn.disabled=true; btn.textContent='解读中...';
+  content.innerHTML=''; header.style.display='none';
+  thinking.style.display='block';
+
+  let full='';
+  try{
+    const resp = await fetch(WORKER_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({year,month,day,hour,gender}),
     });
-
-    const contentType = resp.headers.get('content-type') || '';
-    if (contentType.includes('event-stream')) {
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let buf = '';
-      let hasContent = false;
-      thinkingDiv.style.display = 'block';
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += decoder.decode(value, { stream: true });
-        const lines = buf.split('\n');
-        buf = lines.pop();
-        for (const line of lines) {
-          if (!line.startsWith('data:')) continue;
-          const raw = line.slice(5).trim();
-          if (raw === '[DONE]') break;
-          try {
-            const delta = JSON.parse(raw)?.choices?.[0]?.delta;
-            if (delta?.reasoning_content && !hasContent) {
-              // still thinking
+    const ct=resp.headers.get('content-type')||'';
+    if(ct.includes('event-stream')){
+      const reader=resp.body.getReader(),dec=new TextDecoder();
+      let buf='',hasContent=false;
+      while(true){
+        const{done,value}=await reader.read();
+        if(done) break;
+        buf+=dec.decode(value,{stream:true});
+        const lines=buf.split('\n'); buf=lines.pop();
+        for(const line of lines){
+          if(!line.startsWith('data:')) continue;
+          const raw=line.slice(5).trim();
+          if(raw==='[DONE]') break;
+          try{
+            const d=JSON.parse(raw)?.choices?.[0]?.delta;
+            if(d?.content){
+              if(!hasContent){
+                hasContent=true;
+                thinking.style.display='none';
+                header.style.display='block';
+                subtitle.textContent=`${year}年${month}月${day}日 ${hour} · ${gender}命`;
+              }
+              full+=d.content;
+              render(full);
             }
-            if (delta?.content) {
-              if (!hasContent) { hasContent = true; thinkingDiv.style.display = 'none'; }
-              fullText += delta.content;
-              renderContent(fullText);
-            }
-          } catch {}
+          }catch{}
         }
       }
-      if (!fullText) contentDiv.textContent = '未收到解读内容，请重试';
+      if(!full) content.textContent='未收到解读内容，请重试';
     } else {
-      const data = await resp.json();
-      fullText = data.content || '';
-      contentDiv.textContent = fullText || data.error || '解读失败';
+      const data=await resp.json();
+      full=data.content||'';
+      if(full){ header.style.display='block'; render(full); }
+      else content.textContent=data.error||'解读失败';
     }
-  } catch (err) {
-    contentDiv.textContent = '错误：' + (err && err.message ? err.message : String(err));
+  }catch(err){
+    content.textContent='错误：'+(err?.message||String(err));
   }
-
-  btn.disabled = false;
-  btn.textContent = '重新解读';
+  thinking.style.display='none';
+  btn.disabled=false; btn.textContent='重新解读';
 });
 </script>

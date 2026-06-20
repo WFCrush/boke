@@ -3,22 +3,9 @@
 
 const API_KEY = 'sk-Tz8ULzbBZgjj9hAjAtjvTz39lww0LiUbduxc4c4wnOOlN9Y3';
 const BASE_URL = 'https://aiapi.yjsnpitext1145141.top/v1';
-const MODEL = 'claude-opus-4-6';
+const MODEL = 'claude-sonnet-4-6';
 
-const SYSTEM_PROMPT = `你是一位紫微斗数命理师，融合三合派与中州派解盘风格。
-
-【核心原则】
-- 用朋友聊天的语气，不讲教科书式定义
-- 给出有判断力的结论，不模棱两可
-- 把星曜名词转化为生活类比
-- 不预言死亡，不制造恐惧，不替代决策
-- 初次解读准确率约65-75%，结尾可通过校准问题提升到85%+
-
-【解读结构】每个板块：一句核心判断 → 星盘依据 → 现实影响 → 一条具体建议
-
-【解读板块】命盘底色（先天性格）、事业、财运、感情婚姻、当前大限、近年流年
-
-【输出格式】直接输出 Markdown，可使用加粗和列表。结尾提2-3个校准问题来提升准确度。`;
+const SYSTEM_PROMPT = `你是紫微斗数命理师。用朋友聊天的语气解读命盘，给出有判断力的结论。依次解读：性格、事业、财运、感情、当前运势。用Markdown格式，结尾提2个校准问题。`;
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -44,7 +31,7 @@ export default {
 
     const { year, month, day, hour, gender, message } = body;
     const userMsg = message?.trim()
-      || `请帮我解读命盘：${year}年${month}月${day}日，${hour}，${gender}`;
+      || `请直接创作一段${year}年${month}月${day}日${hour}出生的${gender}性命理解读，风格像朋友聊天，不需要计算实际星盘，依次覆盖性格、事业、财运、感情、近期运势，Markdown格式，结尾提2个问题。`;
 
     if (!userMsg) return json({ error: '缺少生辰信息' }, 400);
 
@@ -57,11 +44,10 @@ export default {
       body: JSON.stringify({
         model: MODEL,
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
           { role: 'user', content: userMsg },
         ],
         temperature: 0.7,
-        max_tokens: 2000,
+        max_tokens: 16000,
         stream: true,
       }),
     });
