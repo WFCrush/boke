@@ -33,26 +33,35 @@ layout: page
 </form>
 
 <div id="result" style="margin-top:24px;display:none">
-  <div id="result-thinking" style="color:#888;font-size:0.9em;margin-bottom:8px;display:none">思考中...</div>
-  <div id="result-content" style="white-space:pre-wrap;line-height:1.8"></div>
+  <div id="result-thinking" style="color:#888;font-size:0.9em;margin-bottom:8px;display:none">AI 思考中，请稍候（约30秒）...</div>
+  <div id="result-content" style="line-height:1.8"></div>
 </div>
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
 const WORKER_URL = 'https://mingli.zyn6915060.workers.dev';
+
+function renderContent(text) {
+  const div = document.getElementById('result-content');
+  div.innerHTML = typeof marked !== 'undefined' ? marked.parse(text) : text.replace(/\n/g, '<br>');
+}
 
 document.getElementById('mingli-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = document.getElementById('submit-btn');
   const resultDiv = document.getElementById('result');
+  const thinkingDiv = document.getElementById('result-thinking');
   const contentDiv = document.getElementById('result-content');
 
   btn.disabled = true;
   btn.textContent = '解读中...';
-  contentDiv.textContent = '';
+  contentDiv.innerHTML = '';
+  thinkingDiv.style.display = 'none';
   resultDiv.style.display = 'block';
 
+  let fullText = '';
   try {
     const resp = await fetch(WORKER_URL, {
       method: 'POST',
@@ -67,12 +76,12 @@ document.getElementById('mingli-form').addEventListener('submit', async (e) => {
     });
 
     const contentType = resp.headers.get('content-type') || '';
-    if (contentType.includes('text/event-stream')) {
+    if (contentType.includes('event-stream')) {
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
-      const thinkingDiv = document.getElementById('result-thinking');
       let buf = '';
       let hasContent = false;
+      thinkingDiv.style.display = 'block';
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -81,29 +90,29 @@ document.getElementById('mingli-form').addEventListener('submit', async (e) => {
         buf = lines.pop();
         for (const line of lines) {
           if (!line.startsWith('data:')) continue;
-          const data = line.slice(5).trim();
-          if (data === '[DONE]') break;
+          const raw = line.slice(5).trim();
+          if (raw === '[DONE]') break;
           try {
-            const parsed = JSON.parse(data)?.choices?.[0]?.delta;
-            if (parsed?.reasoning_content && !hasContent) {
-              thinkingDiv.style.display = 'block';
+            const delta = JSON.parse(raw)?.choices?.[0]?.delta;
+            if (delta?.reasoning_content && !hasContent) {
+              // still thinking
             }
-            if (parsed?.content) {
-              if (!hasContent) {
-                hasContent = true;
-                thinkingDiv.style.display = 'none';
-              }
-              contentDiv.textContent += parsed.content;
+            if (delta?.content) {
+              if (!hasContent) { hasContent = true; thinkingDiv.style.display = 'none'; }
+              fullText += delta.content;
+              renderContent(fullText);
             }
           } catch {}
         }
       }
+      if (!fullText) contentDiv.textContent = '未收到解读内容，请重试';
     } else {
       const data = await resp.json();
-      contentDiv.textContent = data.content || data.error || '解读失败';
+      fullText = data.content || '';
+      contentDiv.textContent = fullText || data.error || '解读失败';
     }
-  } catch {
-    contentDiv.textContent = '网络错误，请重试';
+  } catch (err) {
+    contentDiv.textContent = '错误：' + (err && err.message ? err.message : String(err));
   }
 
   btn.disabled = false;
