@@ -251,7 +251,7 @@ body.boke-home #banner {
 
 body.boke-home #banner .mask {
   background:
-    linear-gradient(180deg, rgba(15, 23, 42, 0.42), rgba(15, 23, 42, 0.22) 48%, rgba(244, 247, 251, 0.12));
+    linear-gradient(180deg, rgba(15, 23, 42, 0.34), rgba(15, 23, 42, 0.18) 52%, rgba(244, 247, 251, 0.08));
 }
 
 body.boke-home #banner .banner-text::before {
@@ -259,10 +259,10 @@ body.boke-home #banner .banner-text::before {
   display: block;
   margin-bottom: var(--boke-space-2);
   color: #fff;
-  font-size: clamp(26px, 3.2vw, 40px);
+  font-size: clamp(24px, 2.8vw, 34px);
   font-weight: 700;
   line-height: 1.2;
-  text-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+  text-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
 }
 
 .banner-text .h2 {
@@ -1013,7 +1013,7 @@ html[data-user-color-scheme="dark"] .boke-back-to-top:hover {
   }
 
   body.boke-home #banner .banner-text::before {
-    font-size: clamp(24px, 5vw, 40px);
+    font-size: clamp(22px, 4.5vw, 32px);
   }
 
   .boke-reading-progress {

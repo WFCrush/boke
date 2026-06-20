@@ -464,6 +464,7 @@ textarea { padding: 0.85rem; resize: vertical; font-family: Consolas, "Microsoft
 .form-row { display: grid; gap: 0.35rem; margin-bottom: 0.85rem; }
 .form-row span { font-size: 0.85rem; color: var(--text-2); }
 .form-row textarea { min-height: 5rem; font-family: inherit; }
+.form-row-wide { grid-column: 1 / -1; }
 .form-actions {
   display: flex;
   justify-content: flex-end;
@@ -479,6 +480,69 @@ textarea { padding: 0.85rem; resize: vertical; font-family: Consolas, "Microsoft
   background: var(--bg);
   border-radius: var(--radius-sm);
   border-left: 3px solid var(--warning);
+}
+
+section[data-panel="site"] .card-narrow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1rem;
+  row-gap: 0.2rem;
+  max-width: 980px;
+  margin: 1rem auto;
+  padding: 1.25rem;
+}
+
+section[data-panel="site"] .card-narrow > h2,
+section[data-panel="site"] .card-narrow > .muted,
+section[data-panel="site"] .section-title,
+section[data-panel="site"] .form-actions,
+section[data-panel="site"] .hint {
+  grid-column: 1 / -1;
+}
+
+section[data-panel="site"] .card-narrow > h2 {
+  margin-bottom: 0.25rem;
+  font-size: 1.18rem;
+}
+
+section[data-panel="site"] .card-narrow > .muted {
+  margin-bottom: 0.55rem;
+  font-size: 0.84rem;
+}
+
+section[data-panel="site"] .section-title {
+  margin: 0.9rem 0 0.45rem;
+  font-size: 0.86rem;
+}
+
+section[data-panel="site"] .form-row {
+  margin-bottom: 0.55rem;
+}
+
+section[data-panel="site"] .form-row span {
+  font-size: 0.8rem;
+}
+
+section[data-panel="site"] input,
+section[data-panel="site"] textarea {
+  min-height: 2.35rem;
+}
+
+section[data-panel="site"] textarea {
+  min-height: 7rem;
+  resize: vertical;
+}
+
+section[data-panel="site"] .form-actions {
+  align-items: center;
+  margin-top: 0.65rem;
+}
+
+section[data-panel="site"] .hint {
+  margin-top: 0.2rem;
+  padding: 0.55rem 0.7rem;
+  border-left-color: rgba(79, 70, 229, 0.55);
+  background: rgba(79, 70, 229, 0.06);
 }
 
 /* 筛选栏 */
@@ -1252,6 +1316,7 @@ kbd { border-radius: 8px; background: rgba(79, 70, 229, 0.08); color: var(--acce
   .tab-panel { height: calc(100vh - 96px); }
   .cards-grid { grid-template-columns: 1fr; padding: 0.85rem; }
   .card { margin: 0.85rem; }
+  section[data-panel="site"] .card-narrow { grid-template-columns: 1fr; margin: 0.85rem; }
   .action-bar { align-items: stretch; flex-direction: column; gap: 0.7rem; }
   .action-bar-right { flex-wrap: wrap; }
   .publish-status-grid { grid-template-columns: 1fr; }
