@@ -245,6 +245,7 @@ custom_js:
   - /js/contact-widget.js
   - /js/site-enhance.js
   - /js/home-premium.js
+  - /js/aurora-ui.js
   - /js/post-reading-plus.js
   - /js/public-skill-chat-config.js
   - /js/public-skill-chat.js
@@ -400,6 +401,7 @@ navbar:
     ] }
     - { key: "命盘解读", link: "/mingli/", icon: "iconfont icon-user-fill" }
     - { key: "对话分析", link: "/skill-chat/", icon: "iconfont icon-comment" }
+    - { key: "projects", name: "项目", link: "/projects/", icon: "iconfont icon-code" }
     - { key: "about", link: "/about/", icon: "iconfont icon-user-fill" }
     #- { key: "links", link: "/links/", icon: "iconfont icon-link-fill" }
 

@@ -12,7 +12,6 @@ tags:
 description: 记录从本地 Hexo 项目生成静态文件，到使用 GitHub Actions 自动部署到 GitHub Pages 的关键步骤和常见问题。
 excerpt: 本文整理 Hexo + Fluid 博客部署到 GitHub Pages 的完整流程，包含本地预览、自动部署和发布排查。
 cover: /img/home-banner.png
-index_img: /img/home-banner.png
 banner_img: /img/home-banner.png
 top: true
 sticky: 10
