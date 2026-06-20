@@ -39,7 +39,6 @@ layout: page
 </div>
 
 <script>
-// 替换为你的 Cloudflare Worker 地址
 const WORKER_URL = 'https://mingli.zyn6915060.workers.dev';
 
 document.getElementById('mingli-form').addEventListener('submit', async (e) => {
@@ -50,7 +49,8 @@ document.getElementById('mingli-form').addEventListener('submit', async (e) => {
 
   btn.disabled = true;
   btn.textContent = '解读中...';
-  resultDiv.style.display = 'none';
+  contentDiv.textContent = '';
+  resultDiv.style.display = 'block';
 
   try {
     const resp = await fetch(WORKER_URL, {
@@ -64,14 +64,37 @@ document.getElementById('mingli-form').addEventListener('submit', async (e) => {
         gender: document.getElementById('gender').value,
       }),
     });
-    const data = await resp.json();
-    contentDiv.textContent = data.content || data.error || '解读失败';
+
+    const contentType = resp.headers.get('content-type') || '';
+    if (contentType.includes('text/event-stream')) {
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split('\n');
+        buf = lines.pop();
+        for (const line of lines) {
+          if (!line.startsWith('data:')) continue;
+          const data = line.slice(5).trim();
+          if (data === '[DONE]') break;
+          try {
+            const delta = JSON.parse(data)?.choices?.[0]?.delta?.content;
+            if (delta) contentDiv.textContent += delta;
+          } catch {}
+        }
+      }
+    } else {
+      const data = await resp.json();
+      contentDiv.textContent = data.content || data.error || '解读失败';
+    }
   } catch {
     contentDiv.textContent = '网络错误，请重试';
   }
 
-  resultDiv.style.display = 'block';
   btn.disabled = false;
-  btn.textContent = '开始解读';
+  btn.textContent = '重新解读';
 });
 </script>
