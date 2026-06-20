@@ -398,6 +398,7 @@ navbar:
       { key: "分类", link: "/categories/", icon: "iconfont icon-category-fill" },
       { key: "标签", link: "/tags/", icon: "iconfont icon-tags-fill" }
     ] }
+    - { key: "命盘解读", link: "/mingli/", icon: "iconfont icon-user-fill" }
     - { key: "对话分析", link: "/skill-chat/", icon: "iconfont icon-comment" }
     - { key: "about", link: "/about/", icon: "iconfont icon-user-fill" }
     #- { key: "links", link: "/links/", icon: "iconfont icon-link-fill" }
