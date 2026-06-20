@@ -24,12 +24,17 @@ layout: page
 .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#bbb;margin:0 3px;animation:pulse 1.2s infinite}
 .dot:nth-child(2){animation-delay:.4s}.dot:nth-child(3){animation-delay:.8s}
 @keyframes pulse{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
+@media(max-width:480px){
+  #mingli-form .grid-2{grid-template-columns:1fr!important}
+  #mingli-app{padding:0 4px}
+  .mc{padding:14px 16px}
+}
 </style>
 
 <div id="mingli-app">
 
 <form id="mingli-form" style="display:flex;flex-direction:column;gap:12px">
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+  <div class="grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
     <label>出生年<input type="number" id="year" placeholder="如 1995" min="1900" max="2010" required style="width:100%;margin-top:4px"></label>
     <label>出生月<input type="number" id="month" placeholder="1-12" min="1" max="12" required style="width:100%;margin-top:4px"></label>
     <label>出生日<input type="number" id="day" placeholder="1-31" min="1" max="31" required style="width:100%;margin-top:4px"></label>
