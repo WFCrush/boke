@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>博客管理后台</title>
+    <link rel="stylesheet" href="/aurora-tokens.css">
     <link rel="stylesheet" href="/style.css">
     <link rel="stylesheet" href="/admin-premium.css">
   </head>
@@ -26,7 +27,11 @@
       <!-- 顶栏 -->
       <header class="topbar">
         <div class="topbar-left">
-          <strong class="brand-name">晚风博客后台</strong>
+          <a class="brand-name" href="/" style="display: inline-flex; align-items: center; text-decoration: none; color: inherit;">
+            <strong>晚风の技术笔记</strong>
+            <span class="au-wordmark">· Aurora</span>
+            <span class="admin-tag">后台</span>
+          </a>
           <span class="brand-sep">|</span>
           <button class="nav-tab active" data-tab="editor">✍️ 写作</button>
           <button class="nav-tab" data-tab="posts">📚 文章管理</button>

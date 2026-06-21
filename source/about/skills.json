@@ -1,0 +1,10 @@
+[
+  { "name": "React", "pct": 75 },
+  { "name": "TypeScript", "pct": 80 },
+  { "name": "Node.js", "pct": 65 },
+  { "name": "UI/UX", "pct": 70 },
+  { "name": "Next.js", "pct": 60 },
+  { "name": "Git", "pct": 85 },
+  { "name": "Hexo", "pct": 72 },
+  { "name": "CSS/Sass", "pct": 78 }
+]

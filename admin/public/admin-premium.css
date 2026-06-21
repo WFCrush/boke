@@ -1,52 +1,45 @@
-/* Premium admin editor layer. Load after /style.css. */
+/* Premium admin editor layer. Load after /style.css and /aurora-tokens.css. */
 
 html.admin-premium-enhanced {
-  --admin-premium-ink: #16202f;
-  --admin-premium-muted: #6c7890;
-  --admin-premium-line: rgba(118, 132, 158, 0.24);
-  --admin-premium-line-strong: rgba(52, 74, 108, 0.28);
-  --admin-premium-panel: rgba(255, 255, 255, 0.9);
-  --admin-premium-panel-solid: #fff;
-  --admin-premium-wash: #f4f7fb;
-  --admin-premium-accent: #256f8f;
-  --admin-premium-accent-2: #3c7c55;
+  --admin-premium-ink: var(--au-ink);
+  --admin-premium-muted: var(--au-muted);
+  --admin-premium-line: var(--au-line);
+  --admin-premium-line-strong: var(--au-line-strong);
+  --admin-premium-panel: var(--au-panel);
+  --admin-premium-panel-solid: var(--au-bg);
+  --admin-premium-wash: var(--au-bg-soft);
+  --admin-premium-accent: var(--au-accent);
+  --admin-premium-accent-2: var(--au-accent);
   --admin-premium-warning: #b7791f;
   --admin-premium-danger: #c2413d;
-  --admin-premium-shadow: 0 16px 38px rgba(24, 39, 64, 0.12);
-  --admin-premium-shadow-soft: 0 8px 24px rgba(24, 39, 64, 0.08);
-  --admin-premium-focus: 0 0 0 3px rgba(37, 111, 143, 0.16);
-}
-
-html.dark.admin-premium-enhanced {
-  --admin-premium-ink: #edf3f8;
-  --admin-premium-muted: #9aabc0;
-  --admin-premium-line: rgba(154, 171, 192, 0.22);
-  --admin-premium-line-strong: rgba(196, 209, 224, 0.24);
-  --admin-premium-panel: rgba(16, 26, 39, 0.9);
-  --admin-premium-panel-solid: #111c2b;
-  --admin-premium-wash: #0d1724;
-  --admin-premium-accent: #67b7d1;
-  --admin-premium-accent-2: #84c596;
-  --admin-premium-warning: #e7b257;
-  --admin-premium-danger: #f07a76;
-  --admin-premium-shadow: 0 16px 42px rgba(0, 0, 0, 0.36);
-  --admin-premium-shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.28);
-  --admin-premium-focus: 0 0 0 3px rgba(103, 183, 209, 0.18);
+  --admin-premium-shadow: var(--au-shadow-2);
+  --admin-premium-shadow-soft: var(--au-shadow-1);
+  --admin-premium-focus: 0 0 0 3px var(--au-accent-soft);
 }
 
 html.admin-premium-enhanced body {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.54), rgba(255, 255, 255, 0) 16rem),
-    linear-gradient(135deg, rgba(37, 111, 143, 0.08), rgba(60, 124, 85, 0.08) 48%, rgba(183, 121, 31, 0.06)),
-    var(--bg);
-  color: var(--admin-premium-ink);
+  background: var(--au-bg);
+  color: var(--au-ink);
+  font-family: var(--au-font-sans);
 }
 
-html.dark.admin-premium-enhanced body {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0) 16rem),
-    linear-gradient(135deg, rgba(103, 183, 209, 0.07), rgba(132, 197, 150, 0.06) 50%, rgba(231, 178, 87, 0.05)),
-    var(--bg);
+/* Logo wordmark */
+.au-wordmark {
+  margin-left: 8px;
+  color: var(--au-muted);
+  font-family: var(--au-font-mono);
+  font-size: 14px;
+  letter-spacing: .04em;
+}
+
+.admin-tag {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: var(--au-r-pill);
+  background: var(--au-accent);
+  color: var(--au-accent-ink);
+  font-size: 11px;
+  letter-spacing: .08em;
 }
 
 html.admin-premium-enhanced .nav-tab,
@@ -66,7 +59,9 @@ html.admin-premium-enhanced select:focus-visible {
 
 html.admin-premium-enhanced .topbar {
   border-bottom-color: var(--admin-premium-line);
-  box-shadow: 0 12px 30px rgba(24, 39, 64, 0.08);
+  background: var(--au-panel);
+  backdrop-filter: blur(16px);
+  box-shadow: var(--au-shadow-1);
 }
 
 html.admin-premium-enhanced .editor-layout {

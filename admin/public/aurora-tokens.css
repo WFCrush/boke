@@ -1,0 +1,76 @@
+/* ============================================================
+   Aurora Design Tokens - Admin Copy
+   ------------------------------------------------------------
+   拷贝自 source/css/aurora-tokens.css，用于后台管理界面。
+   ============================================================ */
+
+:root {
+  /* 背景层 - 使用壁纸背景 */
+  --au-bg:        transparent;
+  --au-bg-soft:   rgba(239, 236, 229, 0.85);
+  --au-panel:     rgba(255, 255, 255, 0.85);
+
+  /* 文字层 */
+  --au-ink:       #14181d;
+  --au-ink-soft:  #4a525c;
+  --au-muted:     #8a909a;
+
+  /* 描边 */
+  --au-line:      rgba(20, 24, 29, 0.12);
+  --au-line-strong: rgba(20, 24, 29, 0.2);
+
+  /* 强调（黑色实心按钮 / 焦点） */
+  --au-accent:     #1c1f26;
+  --au-accent-ink: #f7f5f0;
+  --au-accent-soft: rgba(28, 31, 38, 0.06);
+
+  /* 圆角 */
+  --au-r-sm:   12px;
+  --au-r-md:   18px;
+  --au-r-lg:   28px;
+  --au-r-xl:   40px;
+  --au-r-pill: 999px;
+
+  /* 阴影 */
+  --au-shadow-1: 0 1px 0 rgba(20, 24, 29, 0.04), 0 8px 24px rgba(20, 24, 29, 0.06);
+  --au-shadow-2: 0 12px 40px rgba(20, 24, 29, 0.08);
+  --au-shadow-3: 0 30px 80px rgba(20, 24, 29, 0.18);
+
+  /* 字体 */
+  --au-font-sans: "Inter", "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  --au-font-mono: "JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+
+  /* 字号 */
+  --au-body:  16px;
+  --au-small: 14px;
+
+  /* 过渡 */
+  --au-ease:     cubic-bezier(.2, .7, .2, 1);
+  --au-dur-1:    .2s;
+  --au-dur-2:    .4s;
+  --au-dur-3:    .6s;
+}
+
+/* 系统级暗色跟随（后台无 data-user-color-scheme，用 prefers-color-scheme） */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --au-bg:        #0e1014;
+    --au-bg-soft:   #14181d;
+    --au-panel:     rgba(20, 24, 29, 0.7);
+
+    --au-ink:       #f0eee8;
+    --au-ink-soft:  rgba(214, 220, 230, 0.78);
+    --au-muted:     #6e7480;
+
+    --au-line:        rgba(255, 255, 255, 0.08);
+    --au-line-strong: rgba(255, 255, 255, 0.16);
+
+    --au-accent:     #f0eee8;
+    --au-accent-ink: #14181d;
+    --au-accent-soft: rgba(240, 238, 232, 0.08);
+
+    --au-shadow-1: 0 1px 0 rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.4);
+    --au-shadow-2: 0 12px 40px rgba(0, 0, 0, 0.5);
+    --au-shadow-3: 0 30px 80px rgba(0, 0, 0, 0.6);
+  }
+}
