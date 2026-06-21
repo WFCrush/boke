@@ -34,12 +34,7 @@ math: false
 
 <div id="mingli-app">
 
-<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:20px;text-align:center;margin:20px 0">
-  <h3 style="color:#856404;margin:0 0 10px">⚠️ 功能维护中</h3>
-  <p style="color:#856404;margin:0">由于网络服务限制，命理解读功能暂时无法使用。我们正在寻找替代方案，敬请期待。</p>
-</div>
-
-<form id="mingli-form" style="display:none;flex-direction:column;gap:12px">
+<form id="mingli-form" style="display:flex;flex-direction:column;gap:12px">
   <div class="grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
     <label>出生年<input type="number" id="year" placeholder="如 1995" min="1900" max="2010" required style="width:100%;margin-top:4px"></label>
     <label>出生月<input type="number" id="month" placeholder="1-12" min="1" max="12" required style="width:100%;margin-top:4px"></label>
@@ -80,7 +75,16 @@ math: false
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-const WORKER_URL = 'https://mingli.wflrsx.workers.dev';
+// 注册 Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw-mingli.js').then(reg => {
+    console.log('Service Worker 已注册');
+  }).catch(err => {
+    console.error('Service Worker 注册失败:', err);
+  });
+}
+
+const WORKER_URL = '/api/mingli'; // Service Worker 会拦截这个路径
 
 const COLORS = {
   '性格':'#9b59b6','命盘':'#9b59b6','先天':'#9b59b6',
