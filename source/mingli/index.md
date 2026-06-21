@@ -75,13 +75,37 @@ math: false
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-// 注册 Service Worker
+// 等待 Service Worker 激活
+let swReady = false;
+
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw-mingli.js').then(reg => {
     console.log('Service Worker 已注册');
+    // 等待激活
+    if (reg.active) {
+      swReady = true;
+      console.log('Service Worker 已激活');
+    } else {
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'activated') {
+            swReady = true;
+            console.log('Service Worker 已激活');
+          }
+        });
+      });
+    }
+    // 强制刷新以激活 Service Worker
+    return navigator.serviceWorker.ready;
+  }).then(() => {
+    swReady = true;
+    console.log('Service Worker 就绪');
   }).catch(err => {
     console.error('Service Worker 注册失败:', err);
   });
+} else {
+  console.error('浏览器不支持 Service Worker');
 }
 
 const WORKER_URL = '/api/mingli'; // Service Worker 会拦截这个路径
@@ -120,6 +144,14 @@ function render(md){
 
 document.getElementById('mingli-form').addEventListener('submit', async(e)=>{
   e.preventDefault();
+  
+  // 检查 Service Worker 是否就绪
+  if (!swReady) {
+    alert('功能正在初始化，请刷新页面后重试');
+    location.reload();
+    return;
+  }
+  
   const btn = document.getElementById('submit-btn');
   const thinking = document.getElementById('thinking-bar');
   const header = document.getElementById('result-header');
