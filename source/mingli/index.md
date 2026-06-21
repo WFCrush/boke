@@ -2,6 +2,7 @@
 title: 紫微斗数命盘解读
 date: 2026-06-20
 layout: page
+math: false
 ---
 
 <style>
@@ -83,7 +84,7 @@ const COLORS = {
   '感情':'#e74c3c','爱情':'#e74c3c','婚姻':'#e74c3c',
   '运势':'#27ae60','流年':'#27ae60','大限':'#27ae60','近期':'#27ae60','近年':'#27ae60',
 };
-function getColor(t){for(const[k,v]of Object.entries(COLORS))if(t.includes(k))return v;return'#7f8c8d';}
+function getColor(t){for(const k in COLORS){if(t.includes(k))return COLORS[k];}return'#7f8c8d';}
 
 function render(md){
   const parts = md.split(/(?=^## )/m);
@@ -95,13 +96,14 @@ function render(md){
       const rawTitle = nl>0 ? part.slice(3,nl) : part.slice(3);
       const body = nl>0 ? part.slice(nl+1).trim() : '';
       const c = getColor(rawTitle);
-      html += `<div class="mc" style="border-left-color:${c}">
-        <div class="mc-t" style="color:${c}">${rawTitle}</div>
-        ${body ? `<div class="mc-b">${marked.parse(body)}</div>` : ''}
-      </div>`;
+      const bodyHtml = body ? '<div class="mc-b">' + marked.parse(body) + '</div>' : '';
+      html += '<div class="mc" style="border-left-color:' + c + '">' +
+        '<div class="mc-t" style="color:' + c + '">' + rawTitle + '</div>' +
+        bodyHtml +
+      '</div>';
     } else {
       const parsed = marked.parse(part.trim());
-      if(parsed.trim()) html += `<div class="mc-intro">${parsed}</div>`;
+      if(parsed.trim()) html += '<div class="mc-intro">' + parsed + '</div>';
     }
   }
   document.getElementById('result-content').innerHTML = html;
@@ -130,34 +132,35 @@ document.getElementById('mingli-form').addEventListener('submit', async(e)=>{
     const resp = await fetch(WORKER_URL,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({year,month,day,hour,gender}),
+      body:JSON.stringify({year:year,month:month,day:day,hour:hour,gender:gender}),
     });
     const ct=resp.headers.get('content-type')||'';
     if(ct.includes('event-stream')){
       const reader=resp.body.getReader(),dec=new TextDecoder();
       let buf='',hasContent=false;
       while(true){
-        const{done,value}=await reader.read();
-        if(done) break;
-        buf+=dec.decode(value,{stream:true});
+        const res=await reader.read();
+        if(res.done) break;
+        buf+=dec.decode(res.value,{stream:true});
         const lines=buf.split('\n'); buf=lines.pop();
         for(const line of lines){
           if(!line.startsWith('data:')) continue;
           const raw=line.slice(5).trim();
           if(raw==='[DONE]') break;
           try{
-            const d=JSON.parse(raw)?.choices?.[0]?.delta;
-            if(d?.content){
+            const d=JSON.parse(raw);
+            const delta = d && d.choices && d.choices[0] && d.choices[0].delta;
+            if(delta && delta.content){
               if(!hasContent){
                 hasContent=true;
                 thinking.style.display='none';
                 header.style.display='block';
-                subtitle.textContent=`${year}年${month}月${day}日 ${hour} · ${gender}命`;
+                subtitle.textContent=year+'年'+month+'月'+day+'日 '+hour+' · '+gender+'命';
               }
-              full+=d.content;
+              full+=delta.content;
               render(full);
             }
-          }catch{}
+          }catch(err){}
         }
       }
       if(!full) content.textContent='未收到解读内容，请重试';
@@ -168,7 +171,7 @@ document.getElementById('mingli-form').addEventListener('submit', async(e)=>{
       else content.textContent=data.error||'解读失败';
     }
   }catch(err){
-    content.textContent='错误：'+(err?.message||String(err));
+    content.textContent='错误：'+(err.message||String(err));
   }
   thinking.style.display='none';
   btn.disabled=false; btn.textContent='重新解读';
