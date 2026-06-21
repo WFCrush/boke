@@ -75,7 +75,7 @@ math: false
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-const WORKER_URL = 'https://mingli.zyn6915060.workers.dev';
+const WORKER_URL = 'https://mingli.wflrsx.workers.dev';
 
 const COLORS = {
   '性格':'#9b59b6','命盘':'#9b59b6','先天':'#9b59b6',
