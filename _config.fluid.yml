@@ -82,8 +82,9 @@ code:
 fun_features:
   # 为 subtitle 添加打字机效果
   # Typing animation for subtitle
+  # 晚风信笺：卷首那句题记是静止的，不做打字机
   typing:
-    enable: true
+    enable: false
 
     # 打印速度，数字越大越慢
     # Typing speed, the larger the number, the slower
@@ -121,7 +122,7 @@ fun_features:
   progressbar:
     enable: true
     height_px: 3
-    color: "#165DFF"
+    color: "#9A79B0"
     # See: https://github.com/rstacruz/nprogress
     options: { showSpinner: false, trickleSpeed: 100 }
 
@@ -132,87 +133,88 @@ dark_mode:
   # 默认的选项（当用户手动切换后则不再按照默认模式），选择 `auto` 会优先遵循 prefers-color-scheme，其次按用户本地时间 18 点到次日 6 点之间进入暗色模式
   # Default option (when the visitor switches manually, the default mode is no longer followed), choosing `auto` will give priority to prefers-color-scheme, and then enter the dark mode from 18:00 to 6:00 in the visitor's local time
   # Options: auto | light | dark
-  default: auto
+  # 晚风信笺：全站只有一套暮色配色，浅色槽位与暗色槽位填同样的值，切换按钮由 CSS 隐藏
+  default: dark
 
 # 主题颜色配置，其他不生效的地方请使用自定义 css 解决，配色可以在下方链接中获得启发
 # Theme color, please use custom CSS to solve other colors, color schema can be inspired by the links below
-# See: https://www.webdesignrankings.com/resources/lolcolors/
+# 晚风信笺配色：夜蓝 #171E2B / 檐影 #1E2634 / 灯下暖白 #E9E3D5 / 葡萄紫 #9A79B0 / 苔绿 #8FAE83 / 井水青 #6E93A8
 color:
   # body 背景色
   # Color of body background
-  body_bg_color: "#f7f5f0"
+  body_bg_color: "#171E2B"
   # 暗色模式下的 body 背景色，下同
   # Color in dark mode, the same below
-  body_bg_color_dark: "#0f141b"
+  body_bg_color_dark: "#171E2B"
 
   # 顶部菜单背景色
   # Color of navigation bar background
-  navbar_bg_color: "rgba(247,245,240,0.86)"
-  navbar_bg_color_dark: "rgba(15,20,27,0.86)"
+  navbar_bg_color: "rgba(23,30,43,0.88)"
+  navbar_bg_color_dark: "rgba(23,30,43,0.88)"
 
   # 顶部菜单字体色
   # Color of navigation bar text
-  navbar_text_color: "#263241"
-  navbar_text_color_dark: "rgba(245,241,232,0.88)"
+  navbar_text_color: "rgba(233,227,213,0.82)"
+  navbar_text_color_dark: "rgba(233,227,213,0.82)"
 
   # 副标题字体色
   # Color of subtitle text
-  subtitle_color: "#4b5563"
-  subtitle_color_dark: "rgba(245,241,232,0.72)"
+  subtitle_color: "#AAB1BE"
+  subtitle_color_dark: "#AAB1BE"
 
   # 全局字体色
   # Color of global text
-  text_color: "#202936"
-  text_color_dark: "rgba(245,241,232,0.88)"
+  text_color: "#E9E3D5"
+  text_color_dark: "#E9E3D5"
 
   # 全局次级字体色（摘要、简介等位置）
   # Color of global secondary text (excerpt, introduction, etc.)
-  sec_text_color: "#687385"
-  sec_text_color_dark: "rgba(245,241,232,0.62)"
+  sec_text_color: "#AAB1BE"
+  sec_text_color_dark: "#AAB1BE"
 
-  # 主面板背景色
+  # 主面板背景色（信笺不用卡片，面板与底色同轴，只靠细线分隔）
   # Color of main board
-  board_color: "#fffdfa"
-  board_color_dark: "#171d25"
+  board_color: "#171E2B"
+  board_color_dark: "#171E2B"
 
   # 文章正文字体色
   # Color of post text
-  post_text_color: "#202936"
-  post_text_color_dark: "rgba(245,241,232,0.88)"
+  post_text_color: "#E4DECF"
+  post_text_color_dark: "#E4DECF"
 
   # 文章正文字体色（h1 h2 h3...）
   # Color of Article heading (h1 h2 h3...)
-  post_heading_color: "#111827"
-  post_heading_color_dark: "rgba(245,241,232,0.94)"
+  post_heading_color: "#E9E3D5"
+  post_heading_color_dark: "#E9E3D5"
 
   # 文章超链接字体色
   # Color of post link
-  post_link_color: "#3f5f7f"
-  post_link_color_dark: "#9fb8d0"
+  post_link_color: "#B79ACA"
+  post_link_color_dark: "#B79ACA"
 
   # 超链接悬浮时字体色
   # Color of link when hovering
-  link_hover_color: "#111827"
-  link_hover_color_dark: "#f5f1e8"
+  link_hover_color: "#E9E3D5"
+  link_hover_color_dark: "#E9E3D5"
 
   # 超链接悬浮背景色
   # Color of link background when hovering
-  link_hover_bg_color: "rgba(63,95,127,0.08)"
-  link_hover_bg_color_dark: "rgba(159,184,208,0.12)"
+  link_hover_bg_color: "rgba(154,121,176,0.14)"
+  link_hover_bg_color_dark: "rgba(154,121,176,0.14)"
 
   # 分隔线和表格边线的颜色
   # Color of horizontal rule and table border
-  line_color: "#e4dfd6"
-  line_color_dark: "rgba(245,241,232,0.14)"
+  line_color: "#2C3746"
+  line_color_dark: "#2C3746"
 
   # 滚动条颜色
   # Color of scrollbar
-  scrollbar_color: "#c9c1b4"
-  scrollbar_color_dark: "#46515f"
+  scrollbar_color: "#39445A"
+  scrollbar_color_dark: "#39445A"
   # 滚动条悬浮颜色
   # Color of scrollbar when hovering
-  scrollbar_hover_color: "#3f5f7f"
-  scrollbar_hover_color_dark: "#9fb8d0"
+  scrollbar_hover_color: "#9A79B0"
+  scrollbar_hover_color_dark: "#9A79B0"
 
   # 按钮背景色
   # Color of button
@@ -220,23 +222,19 @@ color:
   button_bg_color_dark: "transparent"
   # 按钮悬浮背景色
   # Color of button when hovering
-  button_hover_bg_color: "rgba(63,95,127,0.08)"
-  button_hover_bg_color_dark: "rgba(159,184,208,0.12)"
+  button_hover_bg_color: "rgba(154,121,176,0.14)"
+  button_hover_bg_color_dark: "rgba(154,121,176,0.14)"
 
-# 主题字体配置
+# 主题字体配置：正文思源宋体，标题楷体、标签仿宋、数字 Consolas 由自定义 CSS 指定
 # Font
 font:
-  font_size: 16px
-  font_family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif
+  font_size: 17px
+  font_family: '"Noto Serif SC", "Source Han Serif SC", Constantia, "Songti SC", SimSun, serif'
   letter_spacing: 0
   code_font_size: 90%
 
 custom_head: '
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap">
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap"></noscript>
+  <meta name="theme-color" content="#171E2B">
 '
 
 # 指定自定义 .js 文件路径，支持列表；路径是相对 source 目录，如 /js/custom.js 对应存放目录 source/js/custom.js
@@ -251,9 +249,10 @@ custom_js:
 # 指定自定义 .css 文件路径，用法和 custom_js 相同
 # The usage is the same as custom_js
 custom_css:
-  - /css/blog-custom.css
   - /css/post-reading-plus.css
   - /css/public-skill-chat.css
+  # 晚风信笺放最后加载，好覆盖上面两份里的强调色变量
+  - /css/blog-custom.css
 
 # 网页访问统计
 # Analysis of website visitors
@@ -521,24 +520,26 @@ footer:
 index:
   # 首页 Banner 头图，可以是相对路径或绝对路径，以下相同
   # Path of Banner image, can be a relative path or an absolute path, the same on other pages
-  banner_img: /img/home-banner.png
+  # 晚风信笺：首页卷首不用照片，背景由自定义 CSS 画成暮色渐变。
+  # 这里仍指一张真实存在的图，只为避免模板生成 url('/null') 而每次 404
+  banner_img: /img/default.png
 
   # 头图高度，屏幕百分比
   # Height ratio of banner image
   # Available: 0 - 100
-  banner_img_height: 48
+  banner_img_height: 38
 
   # 头图黑色蒙版的不透明度，available: 0 - 1.0，1 是完全不透明
   # Opacity of the banner mask, 1.0 is completely opaque
   # Available: 0 - 1.0
-  banner_mask_alpha: 0.55
+  banner_mask_alpha: 0
 
   # 首页副标题的独立设置
   # Independent config of home page subtitle
   slogan:
     enable: true
     text:
-      - 编程学习 · 项目实践 · 技术笔记
+      - 代码、论文，和一些不必要的散文，都收在这里。写给以后的自己看。
 
     # 通过 API 接口作为首页副标题的内容，必须返回的是 JSON 格式，如果请求失败则按 text 字段显示，该功能必须先开启 typing 打字机功能
     # Subtitle of the homepage through the API, must be returned a JSON. If the request fails, it will be displayed in `text` value. This feature must first enable the typing animation
@@ -592,8 +593,8 @@ index:
 #---------------------------
 post:
   banner_img: /img/default.png
-  banner_img_height: 60
-  banner_mask_alpha: 0.30
+  banner_img_height: 30
+  banner_mask_alpha: 0
 
   # 文章在首页的默认封面图，当没有指定 index_img 时会使用该图片，若两者都为空则不显示任何图片
   # Path of the default post cover when `index_img` is not set. If both are empty, no image will be displayed
@@ -795,7 +796,7 @@ post:
 
   custom:
     enable: true
-    content: '<section class="boke-author-card" aria-label="作者简介"><img src="/img/avatar.png" alt="ASHUWEI 头像"><div><h2>关于 ASHUWEI</h2><p>计算机专业学习者，持续记录编程学习、项目实践和技术成长中的真实踩坑经验。</p><p><a href="https://github.com/WFCrush" target="_blank" rel="noopener">GitHub</a><span aria-hidden="true"> · </span><a href="/about/">关于我</a></p></div></section><section class="boke-subscribe-card" aria-label="邮件订阅"><h2>订阅更新</h2><p>想收到新文章提醒，可以把 Mailchimp 表单地址填到 source/js/site-enhance.js 的 subscribeAction。</p><form class="boke-subscribe-form" action="#" method="post" target="_blank"><input type="email" name="EMAIL" placeholder="你的邮箱" aria-label="邮箱地址" required><button type="submit">订阅</button></form></section>'
+    content: '<section class="boke-author-card" aria-label="作者简介"><img src="/img/avatar.png" alt="晚风 头像"><div><h2>关于晚风</h2><p>计算机专业学习者。这里记清一个具体问题，偶尔也放一篇只记一个下午的散文。</p><p><a href="https://github.com/WFCrush" target="_blank" rel="noopener">GitHub</a><span aria-hidden="true"> · </span><a href="/about/">关于我</a></p></div></section><section class="boke-subscribe-card" aria-label="邮件订阅"><h2>订阅更新</h2><p>想收到新文章提醒，可以把 Mailchimp 表单地址填到 source/js/site-enhance.js 的 subscribeAction。</p><form class="boke-subscribe-form" action="#" method="post" target="_blank"><input type="email" name="EMAIL" placeholder="你的邮箱" aria-label="邮箱地址" required><button type="submit">订阅</button></form></section>'
 
 
 #---------------------------
@@ -968,8 +969,8 @@ discuss:
 #---------------------------
 archive:
   banner_img: /img/default.png
-  banner_img_height: 60
-  banner_mask_alpha: 0.3
+  banner_img_height: 30
+  banner_mask_alpha: 0
 
 
 #---------------------------
@@ -979,8 +980,8 @@ archive:
 category:
   enable: true
   banner_img: /img/default.png
-  banner_img_height: 60
-  banner_mask_alpha: 0.3
+  banner_img_height: 30
+  banner_mask_alpha: 0
 
   # 分类的排序字段，前面带减号是倒序，不带减号是正序
   # Sort field for categories, with a minus sign is reverse order
@@ -1008,8 +1009,8 @@ category:
 tag:
   enable: true
   banner_img: /img/default.png
-  banner_img_height: 60
-  banner_mask_alpha: 0.3
+  banner_img_height: 30
+  banner_mask_alpha: 0
   tagcloud:
     min_font: 15
     max_font: 30
@@ -1025,8 +1026,8 @@ tag:
 about:
   enable: true
   banner_img: /img/default.png
-  banner_img_height: 80
-  banner_mask_alpha: 0.3
+  banner_img_height: 30
+  banner_mask_alpha: 0
   avatar: /img/avatar.png
   name: 晚风
   intro: '工科&管科 与你同行'
@@ -1047,8 +1048,8 @@ about:
 #---------------------------
 page:
   banner_img: /img/default.png
-  banner_img_height: 60
-  banner_mask_alpha: 0.3
+  banner_img_height: 30
+  banner_mask_alpha: 0
 
 
 #---------------------------
@@ -1057,8 +1058,8 @@ page:
 #---------------------------
 projects:
   banner_img: /img/home-banner.png
-  banner_img_height: 48
-  banner_mask_alpha: 0.40
+  banner_img_height: 30
+  banner_mask_alpha: 0
 
 
 #---------------------------
@@ -1068,8 +1069,8 @@ projects:
 page404:
   enable: true
   banner_img: /img/default.png
-  banner_img_height: 85
-  banner_mask_alpha: 0.3
+  banner_img_height: 40
+  banner_mask_alpha: 0
   title: "404"
   subtitle: "这页走丢了，试试搜索技术笔记。"
   # 重定向到首页的延迟(毫秒)
@@ -1084,8 +1085,8 @@ page404:
 links:
   enable: true
   banner_img: /img/default.png
-  banner_img_height: 60
-  banner_mask_alpha: 0.3
+  banner_img_height: 30
+  banner_mask_alpha: 0
   # 友链的成员项
   # Member item of page
   items:

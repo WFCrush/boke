@@ -1,1081 +1,1284 @@
 /* ============================================
-   Design Tokens
+   晚风信笺 · Dusk Letter
+   晚风の技术笔记 自定义样式
+   配色：夜蓝 / 檐影 / 灯下暖白 / 葡萄紫 / 苔绿 / 井水青
+   字体：楷体（标题）· 思源宋体（正文）· 仿宋（标签）· Consolas（数据）
+   上一版（Tailwind slate 卡片风）备份在 docs/redesign-2026-08/blog-custom.slate.bak.css
    ============================================ */
+
 :root {
-  --boke-primary: #2563eb;
-  --boke-accent: #0f766e;
-  --boke-text: #1e293b;
-  --boke-muted: #64748b;
-  --boke-border: rgba(120, 130, 155, 0.2);
-  --boke-board: rgba(255, 255, 255, 0.88);
-  --boke-page-bg: #f4f7fb;
-  --boke-sidebar-bg: rgba(15, 23, 42, 0.88);
-  --boke-sidebar-text: rgba(255, 255, 255, 0.82);
-  --boke-sidebar-muted: rgba(255, 255, 255, 0.5);
-  --boke-sidebar-active: #2563eb;
-  --boke-dark-bg: #0f172a;
-  --boke-dark-board: #1e293b;
-  --boke-dark-muted: rgba(214, 220, 230, 0.6);
-  --boke-space-1: 4px;
-  --boke-space-2: 8px;
-  --boke-space-3: 14px;
-  --boke-space-4: 20px;
-  --boke-space-5: 28px;
-  --boke-space-6: 40px;
-  --boke-radius: 8px;
-  --boke-shadow-card: 0 10px 26px rgba(15, 23, 42, 0.06);
-  --boke-shadow-hover: 0 16px 34px rgba(15, 23, 42, 0.09);
+  --dl-night: #171E2B;
+  --dl-night-2: #1E2634;
+  --dl-night-3: #121825;
+  --dl-line: #2C3746;
+  --dl-lamp: #E9E3D5;
+  --dl-lamp-soft: #AAB1BE;
+  --dl-lamp-faint: #767F8F;
+  --dl-grape: #9A79B0;
+  --dl-moss: #8FAE83;
+  --dl-well: #6E93A8;
+
+  --dl-kai: "KaiTi", "STKaiti", "Kaiti SC", "TW-Kai", serif;
+  --dl-kai-mix: Constantia, "KaiTi", "STKaiti", "Kaiti SC", "TW-Kai", serif;
+  --dl-fang: "FangSong", "STFangsong", "FangSong_GB2312", serif;
+  --dl-serif: "Noto Serif SC", "Source Han Serif SC", Constantia, "Songti SC", SimSun, serif;
+  --dl-data: Consolas, "Cascadia Mono", "SFMono-Regular", ui-monospace, monospace;
+
+  --dl-measure: 900px;
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
-body,
-.markdown-body {
-  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-}
-
-body {
-  background: var(--boke-page-bg);
-  color: var(--boke-text);
+/* post-reading-plus.css 与 public-skill-chat.css 的强调色都改成暮色，
+   本文件在 custom_css 里排最后，所以这些覆盖生效 */
+:root,
+html[data-user-color-scheme="dark"],
+html:not([data-user-color-scheme="light"])[data-default-color-scheme="dark"] {
+  --pp-accent: #9A79B0;
+  --pp-accent-2: #8FAE83;
+  --pp-text: #E9E3D5;
+  --pp-muted: #AAB1BE;
+  --pp-soft: #1E2634;
+  --pp-border: #2C3746;
+  --pp-shadow-sm: none;
+  --boke-radius: 0;
 }
 
 /* ============================================
-   Top Navigation
+   全局基础
    ============================================ */
-#navbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: auto;
-  width: 100%;
-  min-height: 0;
-  background: var(--boke-sidebar-bg);
-  border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 0;
-  box-shadow: none;
-  backdrop-filter: saturate(140%) blur(12px);
-  z-index: 1030;
-  overflow: visible;
-  padding: 0;
-  transition: background 0.25s ease, border-color 0.25s ease;
+body {
+  background-color: var(--dl-night);
+  background-image: radial-gradient(120% 60% at 22% 0%, rgba(154, 121, 176, .13), transparent 62%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  font-family: var(--dl-serif);
+  font-weight: 300;
+  line-height: 2.0;
 }
 
-#navbar.boke-navbar-scrolled {
+#board {
+  background-color: transparent;
   box-shadow: none;
-  border-bottom-color: transparent;
+  border: 0;
+  padding-top: 0;
 }
 
-#navbar .container,
-#navbar > .container {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  max-width: 1160px;
-  min-height: 64px;
-  padding: 0 24px;
+/* 全站共用同一条左侧基线：头图标题、信件列表、正文都从这里起排 */
+body:not(.boke-home) #board {
+  max-width: var(--dl-measure);
   margin: 0 auto;
+  padding-left: 28px;
+  padding-right: 28px;
 }
 
-#navbar .navbar-header {
-  padding: 0 20px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  margin-bottom: 8px;
+body:not(.boke-home) .post-content {
+  margin-left: 0;
+  margin-right: 0;
 }
 
-#navbar .navbar-brand {
-  display: block;
-  padding: 0;
-  margin: 0 24px 0 0;
-  max-width: min(42vw, 340px);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* 独立页面（关于 / 项目 / 命理）的 Bootstrap 栅格也回到这条基线 */
+body:not(.boke-home) #board .container,
+body:not(.boke-home) #board .row > [class^="col-"] {
+  max-width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
 }
 
-#navbar .navbar-brand strong {
-  color: #fff;
-  font-size: 0.98rem;
-  font-weight: 700;
-  letter-spacing: 0;
+body:not(.boke-home) #board .row {
+  margin-left: 0;
+  margin-right: 0;
 }
 
-#navbar .navbar-brand .blog-subtitle {
-  display: block;
-  color: var(--boke-sidebar-muted);
-  font-size: 0.78rem;
+/* 桌面端右侧已有目录，正文里那份折叠目录只留给手机 */
+@media (min-width: 769px) {
+  .post-plus-mobile-toc {
+    display: none;
+  }
+}
+
+::selection {
+  background: rgba(154, 121, 176, .32);
+  color: var(--dl-lamp);
+}
+/* ============================================
+   顶栏
+   ============================================ */
+.navbar {
+  border-bottom: 1px solid var(--dl-line);
+  box-shadow: none;
+}
+
+.navbar-brand,
+.navbar-brand strong {
+  font-family: var(--dl-kai);
   font-weight: 400;
-  margin-top: 4px;
+  font-size: 22px;
+  letter-spacing: .16em;
+  color: var(--dl-lamp);
 }
 
-#navbar .navbar-collapse {
-  flex-grow: 0;
-  justify-content: flex-end;
-  min-width: 0;
+.navbar-nav .nav-link {
+  font-family: var(--dl-fang);
+  font-size: 15.5px;
+  letter-spacing: .08em;
+  color: var(--dl-lamp-soft);
 }
 
-#navbar .navbar-nav {
-  align-items: center;
-  flex-direction: row;
-  justify-content: flex-end;
-  gap: 4px;
-  padding: 0;
-  margin-left: auto !important;
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-item.active .nav-link {
+  color: var(--dl-lamp);
+  box-shadow: inset 0 -1px 0 var(--dl-grape);
 }
 
-#navbar .nav-item {
-  width: auto;
-}
-
-#navbar .nav-link {
-  min-height: 38px;
-  display: flex;
-  align-items: center;
-  padding: 0 10px;
-  font-size: 13.5px;
-  font-weight: 500;
-  color: var(--boke-sidebar-text);
-  border-radius: var(--boke-radius);
-  transition: background 0.15s ease, color 0.15s ease;
-  position: relative;
-}
-
-#navbar .nav-link::after {
+/* 顶栏图标是装饰噪声，信笺只留文字 */
+.navbar-nav .nav-link .iconfont {
   display: none;
 }
 
-#navbar .nav-link:hover,
-#navbar .nav-link:focus {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.08);
+/* 全站只有一套暮色配色，切换按钮没有意义 */
+#color-toggle-btn,
+#mobile-color-toggle-btn {
+  display: none !important;
 }
 
-#navbar .nav-link.active {
-  color: #fff;
-  background: var(--boke-sidebar-active);
+/* 加载进度条改成葡萄紫 */
+#nprogress .bar {
+  background: var(--dl-grape) !important;
 }
 
-#navbar .nav-link span {
-  margin-left: 5px;
+#nprogress .peg {
+  box-shadow: 0 0 10px var(--dl-grape), 0 0 5px var(--dl-grape) !important;
 }
-
-#navbar .dropdown-menu {
-  position: absolute;
-  float: none;
-  width: auto;
-  min-width: 158px;
-  border: none;
-  border-radius: var(--boke-radius);
-  background: rgba(15, 23, 42, 0.95);
-  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.22);
-  padding: 6px;
-  margin: 8px 0 0;
-}
-
-#navbar .dropdown-menu .nav-link,
-#navbar .dropdown-menu .dropdown-item {
-  min-height: 34px;
-  padding: 0 10px;
-  font-size: 13px;
-  color: var(--boke-sidebar-text);
-  border-radius: 6px;
-}
-
-#navbar .dropdown-menu .nav-link:hover,
-#navbar .dropdown-menu .dropdown-item:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.08);
-}
-
-#navbar .nav-icon {
-  width: 18px;
-  text-align: center;
-  font-size: 14px;
-}
-
-/* Sidebar author section */
-.boke-sidebar-author {
-  padding: 16px 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  margin-top: auto;
-}
-
-.boke-sidebar-author-img {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.boke-sidebar-author-name {
-  color: #fff;
-  font-size: 0.88rem;
-  font-weight: 600;
-}
-
-.boke-sidebar-author-bio {
-  color: var(--boke-sidebar-muted);
-  font-size: 0.78rem;
-  margin-top: 4px;
-}
-
 /* ============================================
-   Main Content Area
+   卷首（首页头图位置）
    ============================================ */
-#board {
-  margin-left: 0;
+#banner {
+  background-image: none !important;
+  background-color: var(--dl-night) !important;
   border-radius: 0;
-  box-shadow: none;
-  border: none;
-  background: transparent;
-  min-height: 100vh;
+  margin-left: 0;
 }
 
-#board > .container {
-  max-width: 1160px;
-  padding: 34px 22px 56px;
-}
-
-/* ============================================
-   Banner
-   ============================================ */
-body.boke-home #banner {
-  margin-left: 0;
-  border-radius: 0;
-  overflow: hidden;
-  background-position: center 42%;
+#banner .full-bg-img,
+#banner .mask {
+  background-color: transparent !important;
+  background-image: none !important;
 }
 
 body.boke-home #banner .mask {
-  background:
-    linear-gradient(180deg, rgba(15, 23, 42, 0.34), rgba(15, 23, 42, 0.18) 52%, rgba(244, 247, 251, 0.08));
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding-top: 84px;
 }
 
-body.boke-home #banner .banner-text::before {
-  content: "ASHUWEI 的技术笔记";
-  display: block;
-  margin-bottom: var(--boke-space-2);
-  color: #fff;
-  font-size: clamp(24px, 2.8vw, 34px);
-  font-weight: 700;
-  line-height: 1.2;
-  text-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+/* 视口矮的时候 38vh 会把卷首压到导航栏底下并盖住信件列表。
+   高度写在 .header-inner 的行内 style 上，这里用 min-height 兜底。 */
+body.boke-home .header-inner {
+  min-height: 480px;
 }
 
-.banner-text .h2 {
-  font-weight: 400;
-  line-height: 1.45;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+body:not(.boke-home) .header-inner {
+  min-height: 280px;
 }
 
-/* ============================================
-   Typography
-   ============================================ */
-h1, h2, h3, h4, h5, h6,
-.navbar-brand strong,
-.index-header,
-.toc-header {
-  font-weight: 600;
-  letter-spacing: 0;
+body:not(.boke-home) #banner .mask {
+  padding-top: 84px;
 }
 
-code, kbd, pre, samp,
-.code-wrapper,
-.highlight {
-  font-family: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-}
-
-/* Article typography */
-.markdown-body {
-  max-width: 68ch;
-  margin-left: auto;
-  margin-right: auto;
-  font-size: 16px;
-  line-height: 1.75;
-  color: var(--boke-text);
-}
-
-.markdown-body p,
-.markdown-body ul,
-.markdown-body ol,
-.markdown-body blockquote,
-.markdown-body table,
-.markdown-body pre {
-  margin-top: var(--boke-space-3);
-  margin-bottom: var(--boke-space-3);
-}
-
-.markdown-body h1 { font-size: 1.75rem; }
-
-.markdown-body h2 {
-  margin-top: var(--boke-space-5);
-  padding-bottom: var(--boke-space-2);
-  border-bottom: 1px solid var(--boke-border);
-  font-size: 1.4rem;
-}
-
-.markdown-body h3 {
-  margin-top: var(--boke-space-4);
-  font-size: 1.2rem;
-}
-
-.markdown-body h4 {
-  margin-top: var(--boke-space-3);
-  font-size: 1.05rem;
-}
-
-.markdown-body h5 { font-size: 0.98rem; }
-
-.markdown-body h6 {
-  color: var(--boke-muted);
-  font-size: 0.9rem;
-}
-
-.markdown-body a {
-  color: var(--boke-primary);
-  text-underline-offset: 3px;
-  transition: color 0.15s ease;
-}
-
-.markdown-body a:hover {
-  color: var(--boke-accent);
-}
-
-/* Images */
-.markdown-body img,
-.markdown-body picture {
-  display: block;
-  max-width: 100%;
-  height: auto;
-  margin: var(--boke-space-4) auto;
-  border-radius: var(--boke-radius);
-}
-
-/* Blockquote */
-.markdown-body blockquote {
-  border-left: 3px solid var(--boke-border);
-  background: rgba(15, 118, 110, 0.03);
-  border-radius: 0 var(--boke-radius) var(--boke-radius) 0;
-  padding: var(--boke-space-2) var(--boke-space-3);
-  color: var(--boke-muted);
-}
-
-.markdown-body blockquote p {
-  margin: 0.3em 0;
-}
-
-/* Table */
-.markdown-body table {
-  display: table;
+body.boke-home #banner .banner-text {
+  text-align: left !important;
+  max-width: var(--dl-measure);
   width: 100%;
-  border-radius: var(--boke-radius);
-  overflow: hidden;
+  margin: 0 auto;
+  padding: 0 28px 3vh;
 }
 
-/* Code blocks */
-.markdown-body pre,
-.markdown-body .highlight,
-figure.highlight {
-  border: 1px solid var(--boke-border);
-  border-radius: var(--boke-radius);
-  background: #f8fafc;
-  box-shadow: none;
+.dl-hero-name {
+  font-family: var(--dl-kai);
+  font-size: clamp(52px, 9vw, 92px);
+  line-height: 1;
+  letter-spacing: .13em;
+  color: var(--dl-lamp);
+  margin: 0;
 }
 
-.code-wrapper,
-figure.highlight {
-  overflow: hidden;
-  border-radius: var(--boke-radius);
+.dl-hero-epi {
+  font-family: var(--dl-kai);
+  font-size: clamp(21px, 2.8vw, 29px);
+  line-height: 1.85;
+  letter-spacing: .02em;
+  color: var(--dl-lamp);
+  margin: 30px 0 0;
+  max-width: 9.2em;
+}
+/* 那句自述：#subtitle 由 index.slogan 提供 */
+body.boke-home .banner-text .h2 {
+  margin: 24px 0 0;
+  font-size: 16.5px;
+  line-height: 2.05;
+  font-weight: 300;
+  text-shadow: none;
 }
 
-.code-wrapper .copy-btn,
-.copy-btn {
-  border-radius: 4px;
+body.boke-home #subtitle {
+  font-family: var(--dl-serif);
+  color: var(--dl-lamp-soft);
+  display: inline-block;
+  max-width: 34ch;
+  font-size: 16.5px;
+  line-height: 2.05;
 }
 
-/* Post content padding */
-.post-content {
-  padding-left: 0;
-  padding-right: 0;
+/* 内页头图：压扁成一条只放标题的檐影带（上面已给过 padding-top 与下限） */
+body:not(.boke-home) #banner .mask {
+  align-items: flex-end;
+  justify-content: flex-start;
 }
 
-/* Article header */
-#seo-header {
-  max-width: 18ch;
-  margin-left: auto;
-  margin-right: auto;
-  font-size: clamp(28px, 4vw, 46px);
-  line-height: 1.15;
+body:not(.boke-home) .banner-text {
+  max-width: var(--dl-measure);
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 28px 5vh;
+  text-align: left !important;
 }
 
-.post-meta {
-  color: rgba(255, 255, 255, 0.75);
+body:not(.boke-home) .banner-text .h2 {
+  font-family: var(--dl-kai-mix);
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.6;
+  letter-spacing: .04em;
+  font-weight: 400;
+  text-shadow: none;
+  max-width: 26ch;
 }
 
-.post-metas a,
-.post-meta a {
-  color: inherit;
+body:not(.boke-home) #subtitle {
+  color: var(--dl-lamp);
 }
 
+.banner-text .post-metas,
+.banner-text .post-meta {
+  font-family: var(--dl-data);
+  font-size: 12.5px;
+  letter-spacing: .06em;
+  color: var(--dl-lamp-faint);
+}
 /* ============================================
-   Index Cards (White cards on light bg)
+   首页信件列表
    ============================================ */
+body.boke-home #board {
+  max-width: var(--dl-measure);
+  margin: 0 auto;
+  padding: 0 28px;
+}
+
 .index-card {
-  min-height: 0;
-  overflow: hidden;
-  border: 1px solid var(--boke-border);
-  border-radius: var(--boke-radius);
-  background: var(--boke-board);
+  display: block;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
   box-shadow: none;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
-  position: relative;
 }
 
 .index-card:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--boke-shadow-hover);
+  transform: none;
+  box-shadow: none;
 }
 
-.index-card .index-img img {
-  width: 100%;
-  height: 100%;
-  min-height: 180px;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-}
-
+/* 一封信：左边邮戳，右边信文 */
 .index-info {
-  padding: var(--boke-space-4);
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  column-gap: 26px;
+  align-items: start;
+  max-width: none;
+  flex: none;
+  padding: 34px 0;
+  margin: 0;
+  border-bottom: 1px solid var(--dl-line);
 }
 
+.index-info > .dl-stamp {
+  grid-column: 1;
+  grid-row: 1 / span 3;
+}
+
+.index-info > .index-header,
+.index-info > .index-excerpt,
+.index-info > .index-btm {
+  grid-column: 2;
+}
+/* 邮戳：环心是日期，环下是年份，墨色就是这封信的性质 */
+.dl-stamp {
+  position: relative;
+  width: 82px;
+  height: 82px;
+}
+
+.dl-ring {
+  position: absolute;
+  inset: 9px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  opacity: .62;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-7deg);
+}
+
+.dl-ring::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  opacity: .42;
+}
+
+.dl-ring b {
+  font-family: var(--dl-data);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: .02em;
+}
+
+.dl-ring i {
+  font-style: normal;
+  font-family: var(--dl-data);
+  font-size: 8.5px;
+  letter-spacing: .18em;
+  margin-top: 3px;
+  opacity: .85;
+}
+/* 戳记的销印线：留在邮戳与信文之间的空档里，不压到标题上 */
+.dl-cancel {
+  position: absolute;
+  left: 76px;
+  top: 26px;
+  width: 34px;
+  opacity: .3;
+}
+
+.dl-cancel span {
+  display: block;
+  height: 1px;
+  background: currentColor;
+  margin-bottom: 5px;
+}
+
+.dl-cancel span:nth-child(2) { width: 82%; }
+.dl-cancel span:nth-child(3) { width: 64%; }
+
+.dl-stamp--well { color: var(--dl-well); }
+.dl-stamp--moss { color: var(--dl-moss); }
+.dl-stamp--grape { color: var(--dl-grape); }
+
+/* 信文 */
 .index-header {
-  font-size: 1.15rem;
-  line-height: 1.4;
+  font-family: var(--dl-kai-mix);
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1.6;
+  letter-spacing: .01em;
+  margin: 0;
+  /* Fluid 默认把标题截成一行，信笺让它折行写完 */
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  max-height: none;
+  -webkit-line-clamp: unset;
 }
 
 .index-header a {
-  color: #111827;
-  transition: color 0.15s ease;
+  color: var(--dl-lamp);
+  border: 0;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  display: inline;
 }
 
 .index-header a:hover {
-  color: var(--boke-primary);
+  color: var(--dl-lamp);
+  box-shadow: inset 0 -1px 0 currentColor;
+  background: transparent;
 }
 
+/* 置顶：换成一道葡萄紫的页边标记，不是黑箭头也不是浮着的圆点 */
+.index-pin {
+  font-size: 0 !important;
+  margin-right: 12px;
+  vertical-align: middle;
+  position: relative;
+  top: -2px;
+}
+
+.index-pin::before {
+  content: "";
+  display: inline-block;
+  width: 3px;
+  height: 15px;
+  background: var(--dl-grape);
+}
 .index-excerpt {
-  color: var(--boke-muted);
-  line-height: 1.65;
-  font-size: 0.92rem;
+  display: block;
+  margin: 13px 0 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  max-height: none;
+  height: auto;
+  overflow: visible;
 }
 
+.index-excerpt div {
+  color: var(--dl-lamp-soft);
+  font-size: 16.5px;
+  line-height: 1.9;
+  max-width: 44ch;
+  max-height: none;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.index-excerpt:hover div {
+  color: var(--dl-lamp);
+}
+
+/* 散文那几封：标题与摘要都用楷体，读起来是另一种东西 */
+.dl-letter--prose .index-header {
+  font-size: 30px;
+  letter-spacing: .06em;
+}
+
+.dl-letter--prose .index-excerpt div {
+  font-family: var(--dl-kai);
+  color: var(--dl-lamp);
+  font-size: 19px;
+  line-height: 2.1;
+  max-width: 38ch;
+}
+
+/* 信末信息：日期已经在邮戳上了，这里只留分类与标签 */
 .index-btm {
-  gap: var(--boke-space-2);
+  margin: 12px 0 0;
+  padding: 0;
+  border: 0;
+  display: flex;
   flex-wrap: wrap;
+  gap: 4px 18px;
+  align-items: baseline;
+}
+
+.index-btm .post-meta:first-child {
+  display: none;
+}
+.index-btm .post-meta {
+  margin: 0 !important;
+  font-family: var(--dl-fang);
+  font-size: 13.5px;
+  letter-spacing: .1em;
+  color: var(--dl-lamp-faint);
+}
+
+.index-btm .post-meta .iconfont {
+  display: none;
+}
+
+.index-btm .category-chain-item {
+  color: var(--dl-lamp-soft);
+  border: 0;
+}
+
+.dl-letter .index-btm .category-chain-item:hover {
+  box-shadow: inset 0 -1px 0 currentColor;
+}
+
+/* 分类文字与邮戳同墨色（邮戳是信文的兄弟节点，用 ~ 选择器即可） */
+.dl-stamp--well ~ .index-btm .category-chain-item { color: var(--dl-well); }
+.dl-stamp--moss ~ .index-btm .category-chain-item { color: var(--dl-moss); }
+.dl-stamp--grape ~ .index-btm .category-chain-item { color: var(--dl-grape); }
+
+.index-btm .post-meta:last-child a {
+  font-family: var(--dl-data);
+  font-size: 12px;
+  letter-spacing: .04em;
+  color: var(--dl-lamp-faint);
+  margin-right: 10px;
+}
+
+.index-btm .post-meta:last-child a:hover {
+  color: var(--dl-lamp-soft);
+  background: transparent;
 }
 
 /* ============================================
-   Homepage Layout (Sidebar + Content)
+   分页
    ============================================ */
-@media (min-width: 1024px) {
-  body.boke-home #board > .container > .row > .col-12.col-md-10.m-auto {
-    max-width: 100%;
-    flex: 0 0 100%;
-  }
-
-  .boke-home-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 240px;
-    gap: 22px;
-    align-items: start;
-  }
-
-  .boke-home-posts {
-    min-width: 0;
-  }
+.pagination {
+  margin: 46px 0 0;
+  font-family: var(--dl-data);
+  font-size: 13px;
+  letter-spacing: .08em;
+}
+.pagination .page-number,
+.pagination .extend,
+.pagination .space {
+  color: var(--dl-lamp-faint);
+  border: 0;
+  border-radius: 0;
+  padding: 4px 10px;
 }
 
-.boke-home-sidebar {
-  display: grid;
-  gap: var(--boke-space-3);
+.pagination .page-number.current {
+  background: transparent;
+  color: var(--dl-lamp);
+  box-shadow: inset 0 -1px 0 var(--dl-grape);
 }
 
-/* Sidebar cards - for content sidebar */
+.pagination a:hover {
+  background: transparent;
+  color: var(--dl-lamp);
+}
+
+/* ============================================
+   正文页
+   ============================================ */
+.post-content,
+.markdown-body {
+  font-family: var(--dl-serif);
+  font-weight: 300;
+  font-size: 17px;
+  line-height: 2.0;
+  color: var(--dl-lamp);
+  max-width: 36em;
+}
+
+.markdown-body p {
+  margin: 0 0 1.3em;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4 {
+  font-family: var(--dl-kai-mix);
+  font-weight: 400;
+  color: var(--dl-lamp);
+  border: 0;
+  padding: 0;
+}
+
+.markdown-body h2 {
+  font-size: 23px;
+  letter-spacing: .14em;
+  margin: 2.1em 0 .7em;
+}
+.markdown-body h2::before {
+  content: "—— ";
+  color: var(--dl-grape);
+}
+
+.markdown-body h3 {
+  font-size: 20px;
+  letter-spacing: .1em;
+  margin: 1.8em 0 .6em;
+}
+
+.markdown-body h4 {
+  font-size: 18px;
+  letter-spacing: .08em;
+  margin: 1.6em 0 .5em;
+}
+
+.markdown-body a {
+  color: var(--dl-grape);
+  border-bottom: 1px solid rgba(154, 121, 176, .34);
+}
+
+.markdown-body a:hover {
+  color: var(--dl-lamp);
+  border-bottom-color: var(--dl-lamp);
+  background: transparent;
+}
+
+.markdown-body blockquote {
+  margin: 0 0 1.3em;
+  padding: 20px 24px;
+  background: var(--dl-night-2);
+  border: 0;
+  border-left: 2px solid var(--dl-grape);
+  color: var(--dl-lamp);
+  font-family: var(--dl-kai);
+  font-size: 19px;
+  line-height: 2.05;
+}
+
+.markdown-body blockquote p {
+  margin: 0;
+}
+
+.markdown-body strong {
+  font-weight: 500;
+  color: var(--dl-lamp);
+}
+
+.markdown-body hr {
+  border: 0;
+  border-top: 1px solid var(--dl-line);
+  margin: 2.4em 0;
+}
+/* 代码：檐影更深一层，注释用苔绿 */
+.markdown-body pre,
+.markdown-body .highlight,
+.code-wrapper,
+.highlight {
+  background: var(--dl-night-3) !important;
+  border: 1px solid var(--dl-line);
+  border-radius: 0;
+  font-family: var(--dl-data);
+  line-height: 1.8;
+  color: #CBD3DF;
+}
+
+.markdown-body pre code,
+.highlight code,
+.markdown-body code {
+  font-family: var(--dl-data);
+  color: #CBD3DF;
+}
+
+.markdown-body :not(pre) > code {
+  background: rgba(154, 121, 176, .13);
+  color: var(--dl-lamp);
+  border-radius: 0;
+  padding: 1px 5px;
+}
+
+.highlight .comment,
+.highlight .quote,
+.hljs-comment,
+.hljs-quote {
+  color: var(--dl-moss) !important;
+  font-style: normal;
+}
+
+.highlight .gutter,
+.highlight .line-number {
+  color: var(--dl-lamp-faint);
+  border-right: 1px solid var(--dl-line);
+}
+
+.copy-btn,
+.code-wrapper .copy-btn {
+  background: transparent;
+  border: 1px solid var(--dl-line);
+  border-radius: 0;
+  color: var(--dl-lamp-soft);
+  font-family: var(--dl-data);
+  font-size: 11px;
+}
+/* 表格 */
+.markdown-body table {
+  font-family: var(--dl-serif);
+  font-size: 15.5px;
+}
+
+.markdown-body table th {
+  font-family: var(--dl-fang);
+  font-weight: 400;
+  letter-spacing: .08em;
+  color: var(--dl-lamp-soft);
+  background: var(--dl-night-2);
+  border-color: var(--dl-line);
+}
+
+.markdown-body table td {
+  border-color: var(--dl-line);
+}
+
+.markdown-body table tr {
+  background: transparent;
+  border-color: var(--dl-line);
+}
+
+/* 公式：KaTeX / MathJax 在暮色底上要压低亮度 */
+.markdown-body .katex,
+.markdown-body mjx-container {
+  color: var(--dl-lamp);
+  font-size: 1.02em;
+}
+
+/* 文章信息条 */
+.post-meta,
+.post-metas {
+  font-family: var(--dl-data);
+  font-size: 12.5px;
+  letter-spacing: .05em;
+  color: var(--dl-lamp-faint);
+}
+
+.post-meta a,
+.post-metas a {
+  color: var(--dl-lamp-soft);
+  border: 0;
+}
+
+.post-meta a:hover,
+.post-metas a:hover {
+  color: var(--dl-lamp);
+  background: transparent;
+}
+/* ============================================
+   目录（修掉「定 位 / 展 开 / 精 简」竖排折行）
+   ============================================ */
+#toc,
+.side-col,
+.sidebar-toc {
+  width: auto;
+}
+
+.toc-header {
+  font-family: var(--dl-fang);
+  font-size: 14px;
+  letter-spacing: .3em;
+  color: var(--dl-lamp-faint);
+  border-bottom: 1px solid var(--dl-line);
+  padding-bottom: 9px;
+}
+
+.toc-header .iconfont {
+  display: none;
+}
+
+.tocbot-list {
+  font-family: var(--dl-serif);
+}
+
+.tocbot-link {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--dl-lamp-soft);
+  border: 0;
+}
+
+.tocbot-link:hover {
+  color: var(--dl-lamp);
+  background: transparent;
+}
+
+.tocbot-active-link {
+  color: var(--dl-grape) !important;
+  font-weight: 400;
+  background: transparent;
+}
+
+.tocbot-is-active-li > .tocbot-link {
+  color: var(--dl-grape);
+}
+/* 章节定位面板：横排一行，不再每个字换行 */
+.post-plus-toc-panel {
+  background: var(--dl-night-2);
+  border: 1px solid var(--dl-line);
+  border-radius: 0;
+  padding: 11px 13px;
+}
+
+.post-plus-toc-tools,
+.post-plus-toc-status {
+  font-family: var(--dl-data);
+  font-size: 11px;
+  letter-spacing: .1em;
+  color: var(--dl-lamp-faint);
+}
+
+.post-plus-toc-label,
+.post-plus-toc-count {
+  font-family: var(--dl-data);
+  font-size: 11px;
+  letter-spacing: .1em;
+  color: var(--dl-lamp-faint);
+  background: transparent;
+  border-radius: 0;
+}
+
+.post-plus-toc-current,
+.post-plus-current-label,
+.post-plus-current-link {
+  font-family: var(--dl-serif);
+  font-size: 14px;
+  color: var(--dl-lamp);
+}
+
+.post-plus-toc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.post-plus-toc-action {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  min-width: 0;
+  width: auto;
+  padding: 3px 10px;
+  border: 1px solid var(--dl-line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--dl-lamp-soft);
+  font-family: var(--dl-fang);
+  font-size: 12.5px;
+  letter-spacing: .06em;
+  line-height: 1.7;
+}
+.post-plus-toc-action:hover {
+  color: var(--dl-lamp);
+  border-color: var(--dl-grape);
+  background: transparent;
+}
+
+.post-plus-meter {
+  background: var(--dl-line);
+  border-radius: 0;
+  height: 2px;
+}
+
+.post-plus-meter-fill {
+  background: var(--dl-grape);
+  border-radius: 0;
+}
+
+.post-plus-overview,
+.post-plus-finish-card,
+.post-plus-stat-grid {
+  background: var(--dl-night-2);
+  border: 1px solid var(--dl-line);
+  border-radius: 0;
+}
+
+.post-plus-stat-label,
+.post-plus-longform-badge {
+  font-family: var(--dl-data);
+  font-size: 11px;
+  letter-spacing: .12em;
+  color: var(--dl-lamp-faint);
+}
+
+.post-plus-overview-title,
+.post-plus-finish-title {
+  font-family: var(--dl-kai-mix);
+  font-weight: 400;
+  color: var(--dl-lamp);
+  letter-spacing: .08em;
+}
+
+.post-plus-image-caption,
+.post-plus-image-index,
+.post-plus-code-language,
+.post-plus-code-lines,
+.post-plus-code-hint {
+  font-family: var(--dl-data);
+  font-size: 11.5px;
+  letter-spacing: .06em;
+  color: var(--dl-lamp-faint);
+}
+/* ============================================
+   页脚
+   ============================================ */
+.footer {
+  background: transparent;
+  border-top: 1px solid var(--dl-line);
+  margin-top: 80px;
+}
+
+.footer-inner {
+  max-width: var(--dl-measure);
+  margin: 0 auto;
+  padding: 26px 28px 70px;
+  text-align: left;
+}
+
+.footer-content {
+  font-family: var(--dl-fang);
+  font-size: 14px;
+  letter-spacing: .1em;
+  color: var(--dl-lamp-faint);
+  line-height: 2;
+}
+
+.footer-content a {
+  color: var(--dl-lamp-soft);
+  border: 0;
+}
+
+.footer-content a:hover {
+  color: var(--dl-lamp);
+  box-shadow: inset 0 -1px 0 var(--dl-grape);
+  background: transparent;
+}
+
+.footer-content .iconfont {
+  display: none;
+}
+
+/* ============================================
+   上一篇 / 下一篇 · 相关文章
+   ============================================ */
+.post-prevnext,
+.post-custom {
+  border-top: 1px solid var(--dl-line);
+  margin-top: 56px;
+  padding-top: 22px;
+  background: transparent;
+}
+
+.post-prevnext .post-nav-item a {
+  font-family: var(--dl-kai-mix);
+  font-size: 18px;
+  color: var(--dl-lamp);
+  border: 0;
+}
+/* ============================================
+   site-enhance.js 注入的部件
+   ============================================ */
+.boke-reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: var(--dl-grape);
+  z-index: 1100;
+  transition: width .1s linear;
+}
+
 .boke-sidebar-card,
 .boke-author-card,
 .boke-subscribe-card,
 .boke-like-card {
-  border: 1px solid var(--boke-border);
-  border-radius: var(--boke-radius);
-  background: var(--boke-board);
-  box-shadow: var(--boke-shadow-card);
-}
-
-.boke-sidebar-card {
-  padding: var(--boke-space-3);
+  background: var(--dl-night-2);
+  border: 1px solid var(--dl-line);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 18px 20px;
+  margin-bottom: 18px;
 }
 
 .boke-sidebar-card h2,
 .boke-author-card h2,
 .boke-subscribe-card h2 {
-  margin: 0 0 var(--boke-space-2);
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--boke-text);
+  font-family: var(--dl-fang);
+  font-weight: 400;
+  font-size: 14px;
+  letter-spacing: .22em;
+  color: var(--dl-lamp-faint);
+  margin: 0 0 12px;
 }
 
-.boke-profile {
-  display: flex;
-  gap: var(--boke-space-3);
-  align-items: center;
-}
-
-.boke-profile img,
-.boke-author-card img {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.boke-profile p,
-.boke-author-card p,
-.boke-subscribe-card p {
-  margin: var(--boke-space-1) 0 0;
-  color: var(--boke-muted);
-  font-size: 0.84rem;
-  line-height: 1.5;
-}
-
-/* Chips */
-.boke-chip-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--boke-space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.boke-chip-list a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  padding: 0 var(--boke-space-2);
-  border-radius: 999px;
-  background: rgba(37, 99, 235, 0.06);
-  color: var(--boke-primary);
-  font-size: 0.8rem;
-  text-decoration: none;
-  transition: background 0.15s ease;
-}
-
-.boke-chip-list a:hover {
-  background: rgba(37, 99, 235, 0.12);
-}
-
-.boke-hot-list {
-  margin: 0;
-  padding-left: 1.1rem;
-}
-
-.boke-hot-list li + li {
-  margin-top: var(--boke-space-2);
-}
-
-.boke-social-icons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--boke-space-2);
-}
-
-.boke-social-icons a {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 34px;
-  min-height: 34px;
-  border-radius: var(--boke-radius);
-  background: rgba(37, 99, 235, 0.06);
-  color: var(--boke-primary);
-  font-size: 0.82rem;
-  text-decoration: none;
-}
-
-/* ============================================
-   TOC
-   ============================================ */
-#toc {
-  position: sticky;
-  top: 80px;
-  padding: var(--boke-space-3);
-  border: 1px solid var(--boke-border);
-  border-radius: var(--boke-radius);
-  background: rgba(255, 255, 255, 0.85);
-  box-shadow: var(--boke-shadow-card);
-}
-
-.toc-header {
-  color: #111827;
-  font-size: 0.88rem;
-}
-
-.tocbot-link {
-  font-size: 0.88rem;
-}
-
-.tocbot-active-link {
-  color: var(--boke-primary);
-}
-
-/* Prev/Next */
-.post-prevnext {
-  border-radius: var(--boke-radius);
-  overflow: hidden;
-}
-
-.post-custom {
-  max-width: 860px;
-}
-
-/* Author / Subscribe / Like cards */
-.boke-author-card,
-.boke-subscribe-card,
-.boke-like-card {
-  display: flex;
-  gap: var(--boke-space-3);
-  align-items: center;
-  margin: var(--boke-space-4) auto;
-  padding: var(--boke-space-4);
-}
-
-.boke-subscribe-card {
-  display: block;
-}
-
-.boke-subscribe-form {
-  display: flex;
-  gap: var(--boke-space-2);
-  margin-top: var(--boke-space-3);
-}
-
-.boke-subscribe-form input {
-  min-width: 0;
-  flex: 1;
-  min-height: 40px;
-  padding: 0 var(--boke-space-3);
-  border: 1px solid var(--boke-border);
-  border-radius: var(--boke-radius);
-}
-
-.boke-subscribe-form button,
 .boke-like-button,
+.boke-subscribe-form button,
 .boke-share-pop button {
-  min-height: 40px;
-  padding: 0 var(--boke-space-3);
-  border: 0;
-  border-radius: var(--boke-radius);
-  background: var(--boke-primary);
-  color: #fff;
-  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--dl-line);
+  border-radius: 0;
+  color: var(--dl-lamp-soft);
+  font-family: var(--dl-fang);
+  font-size: 13.5px;
+  letter-spacing: .08em;
+  padding: 5px 14px;
 }
 
-.boke-like-card {
-  justify-content: space-between;
+.boke-like-button:hover,
+.boke-subscribe-form button:hover,
+.boke-share-pop button:hover {
+  color: var(--dl-lamp);
+  border-color: var(--dl-grape);
 }
-
-.boke-like-button {
-  background: var(--boke-primary);
-  transition: background 0.2s ease;
-}
-
-.boke-like-button:hover {
-  background: var(--boke-accent);
-}
-
-/* Reading progress */
-.boke-reading-progress {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 2000;
-  width: 0;
-  height: 2px;
-  background: var(--boke-primary);
-  transition: width 0.1s linear;
-}
-
-/* Share popup */
 .boke-share-pop {
-  position: fixed;
-  z-index: 2100;
-  display: none;
-  gap: var(--boke-space-2);
-  padding: var(--boke-space-2);
-  border: 1px solid var(--boke-border);
-  border-radius: var(--boke-radius);
-  background: #fff;
-  box-shadow: var(--boke-shadow-hover);
+  background: var(--dl-night-2);
+  border: 1px solid var(--dl-line);
+  border-radius: 0;
+  box-shadow: 0 10px 26px -14px rgba(0, 0, 0, .7);
+  padding: 7px;
 }
 
-.boke-share-pop.is-visible {
-  display: flex;
-}
-
-.boke-share-pop button {
-  min-height: 34px;
-  font-size: 0.84rem;
-}
-
-/* Contact button */
+/* 两枚悬浮按钮曾经叠在一起：联系在下，回顶在上，各自留出间距 */
 .boke-contact-button {
   position: fixed;
-  right: 18px;
-  bottom: 22px;
-  z-index: 1040;
+  right: 24px;
+  bottom: 24px;
+  z-index: 1030;
   width: 44px;
   height: 44px;
-  border: 0;
-  border-radius: var(--boke-radius);
-  background: var(--boke-primary);
-  color: #fff;
-  box-shadow: var(--boke-shadow-hover);
-  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--dl-night-2);
+  border: 1px solid var(--dl-line);
+  border-radius: 50%;
+  color: var(--dl-lamp-soft);
+  font-family: var(--dl-fang);
   font-size: 13px;
-  transition: background 0.2s ease, transform 0.2s ease;
+  letter-spacing: .04em;
+  box-shadow: none;
 }
 
 .boke-contact-button:hover {
-  background: var(--boke-accent);
-  transform: translateY(-1px);
+  color: var(--dl-lamp);
+  border-color: var(--dl-grape);
+  background: var(--dl-night-2);
+}
+
+.boke-back-to-top {
+  position: fixed;
+  right: 24px;
+  bottom: 80px;
+  z-index: 1030;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--dl-night-2);
+  border: 1px solid var(--dl-line);
+  border-radius: 50%;
+  color: var(--dl-lamp-soft);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease;
+}
+.boke-back-to-top.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.boke-back-to-top:hover {
+  color: var(--dl-lamp);
+  border-color: var(--dl-grape);
+}
+
+/* Fluid 自带的回到顶部按钮，避免和上面那枚重复 */
+#scroll-top-button {
+  display: none !important;
 }
 
 .boke-contact-panel {
   position: fixed;
-  right: 18px;
-  bottom: 74px;
+  right: 24px;
+  bottom: 80px;
   z-index: 1040;
-  width: min(300px, calc(100vw - 32px));
-  padding: var(--boke-space-3);
-  border: 1px solid var(--boke-border);
-  border-radius: var(--boke-radius);
-  background: #fff;
-  box-shadow: var(--boke-shadow-hover);
-  display: none;
+  background: var(--dl-night-2);
+  border: 1px solid var(--dl-line);
+  border-radius: 0;
+  padding: 18px 20px;
+  max-width: 260px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(6px);
+  transition: opacity .2s ease, transform .2s ease, visibility .2s;
 }
 
 .boke-contact-panel.is-open {
-  display: block;
+  opacity: 1;
+  visibility: visible;
+  transform: none;
 }
 
 .boke-contact-panel h3 {
+  font-family: var(--dl-fang);
+  font-weight: 400;
+  font-size: 14px;
+  letter-spacing: .2em;
+  color: var(--dl-lamp-faint);
   margin: 0 0 10px;
-  font-size: 15px;
 }
 
 .boke-contact-panel a {
+  color: var(--dl-lamp-soft);
+  font-family: var(--dl-data);
+  font-size: 13px;
+}
+/* 「本文最后更新于」以及 Fluid 的各类提示条 */
+#updated-time,
+.note {
+  background: var(--dl-night-2) !important;
+  border: 0 !important;
+  border-left: 2px solid var(--dl-grape) !important;
+  border-radius: 0 !important;
+  color: var(--dl-lamp-soft) !important;
+  font-family: var(--dl-data);
+  font-size: 12.5px;
+  letter-spacing: .05em;
+  padding: 11px 16px;
+  box-shadow: none !important;
+}
+
+.note-warning { border-left-color: var(--dl-moss) !important; }
+.note-danger { border-left-color: #C4736B !important; }
+
+/* 关于页那张头像：一枚小圆像，不是通栏大图 */
+.markdown-body img[alt="头像"],
+.page-content img[alt="头像"] {
+  width: 96px !important;
+  height: 96px !important;
+  max-width: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center 30%;
+  border: 1px solid var(--dl-line);
+  margin: 0 0 26px;
   display: block;
-  margin: 8px 0;
 }
 
-.boke-contact-panel img {
-  max-width: 140px;
-  display: block;
-  margin-top: 10px;
-  border-radius: 6px;
+.markdown-body img,
+.page-content img {
+  border-radius: 0;
+  background: transparent;
 }
 
-/* Back to top */
-.boke-back-to-top {
-  position: fixed;
-  right: 18px;
-  bottom: 74px;
-  z-index: 1030;
-  width: 38px;
-  height: 38px;
-  border: 1px solid var(--boke-border);
-  border-radius: var(--boke-radius);
-  background: var(--boke-board);
-  color: var(--boke-muted);
-  box-shadow: var(--boke-shadow-card);
-  cursor: pointer;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transform: translateY(8px);
-  transition: opacity 0.2s ease, transform 0.2s ease, background 0.15s ease, color 0.15s ease;
-  text-decoration: none;
+/* 独立页面（关于 / 项目 / 命理）沿用同一条左侧基线 */
+.page-content {
+  font-family: var(--dl-serif);
+  font-weight: 300;
+  color: var(--dl-lamp);
+  max-width: 36em;
+  margin-left: 0;
 }
 
-.boke-back-to-top.is-visible {
-  opacity: 1;
-  transform: translateY(0);
+.page-content h1,
+.page-content h2,
+.page-content h3 {
+  font-family: var(--dl-kai-mix);
+  font-weight: 400;
+  color: var(--dl-lamp);
+  border: 0;
 }
 
-.boke-back-to-top:hover {
-  background: var(--boke-primary);
-  color: #fff;
-  border-color: var(--boke-primary);
+.page-content h2 {
+  font-size: 23px;
+  letter-spacing: .14em;
+  margin: 2.1em 0 .7em;
 }
 
-/* Columns utility */
-.boke-columns {
-  display: grid;
-  grid-template-columns: repeat(var(--columns, 2), minmax(0, 1fr));
-  gap: 1rem;
-  margin: 1.2rem 0;
+.page-content h2::before {
+  content: "—— ";
+  color: var(--dl-grape);
 }
 
-.boke-columns > div {
-  min-width: 0;
+.page-content a {
+  color: var(--dl-grape);
 }
 
-.boke-columns .boke-card {
-  height: 100%;
-  padding: 1rem;
-  border: 1px solid var(--boke-border);
-  border-radius: var(--boke-radius);
-  background: rgba(248, 250, 252, 0.6);
+/* seo-header 只给搜索引擎，标题已经在头图里 */
+#seo-header {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
-/* Focus visible */
-button:focus-visible,
+/* ============================================
+   可访问性与降级
+   ============================================ */
 a:focus-visible,
-input:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid rgba(37, 99, 235, 0.4);
-  outline-offset: 2px;
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--dl-grape);
+  outline-offset: 3px;
 }
 
-/* ============================================
-   Animations (fadeInUp like reference)
-   ============================================ */
-@keyframes boke-fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes boke-fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.boke-fade-in-up {
-  animation: boke-fadeInUp 0.4s ease both;
-}
-
-.boke-fade-in {
-  animation: boke-fadeIn 0.35s ease both;
-}
-
-.index-card {
-  animation: boke-fadeInUp 0.45s ease both;
-}
-
-.index-card:nth-child(1) { animation-delay: 0.05s; }
-.index-card:nth-child(2) { animation-delay: 0.1s; }
-.index-card:nth-child(3) { animation-delay: 0.15s; }
-.index-card:nth-child(4) { animation-delay: 0.2s; }
-.index-card:nth-child(5) { animation-delay: 0.25s; }
-.index-card:nth-child(6) { animation-delay: 0.3s; }
-
-/* ============================================
-   Dark mode
-   ============================================ */
-html[data-user-color-scheme="dark"] body {
-  color: rgba(245, 247, 250, 0.88);
-}
-
-html[data-user-color-scheme="dark"] #navbar {
-  background: #0f172a;
-}
-
-html[data-user-color-scheme="dark"] #board {
-  background: var(--boke-dark-bg);
-}
-
-html[data-user-color-scheme="dark"] .index-card,
-html[data-user-color-scheme="dark"] .boke-sidebar-card,
-html[data-user-color-scheme="dark"] .boke-author-card,
-html[data-user-color-scheme="dark"] .boke-subscribe-card,
-html[data-user-color-scheme="dark"] .boke-like-card,
-html[data-user-color-scheme="dark"] .boke-contact-panel,
-html[data-user-color-scheme="dark"] .boke-share-pop {
-  border-color: rgba(255, 255, 255, 0.1);
-  background: var(--boke-dark-board);
-}
-
-html[data-user-color-scheme="dark"] .index-header a,
-html[data-user-color-scheme="dark"] .toc-header {
-  color: rgba(245, 247, 250, 0.92);
-}
-
-html[data-user-color-scheme="dark"] .index-excerpt,
-html[data-user-color-scheme="dark"] .boke-profile p,
-html[data-user-color-scheme="dark"] .boke-author-card p,
-html[data-user-color-scheme="dark"] .boke-subscribe-card p {
-  color: var(--boke-dark-muted);
-}
-
-html[data-user-color-scheme="dark"] .markdown-body blockquote {
-  background: rgba(94, 234, 212, 0.05);
-  color: rgba(226, 232, 240, 0.8);
-}
-
-html[data-user-color-scheme="dark"] .markdown-body pre,
-html[data-user-color-scheme="dark"] .markdown-body .highlight,
-html[data-user-color-scheme="dark"] figure.highlight {
-  border-color: rgba(255, 255, 255, 0.1);
-  background: rgba(15, 23, 42, 0.6);
-}
-
-html[data-user-color-scheme="dark"] #toc {
-  background: rgba(30, 41, 59, 0.8);
-}
-
-html[data-user-color-scheme="dark"] .boke-columns .boke-card {
-  background: rgba(30, 41, 59, 0.6);
-}
-
-html[data-user-color-scheme="dark"] .boke-chip-list a,
-html[data-user-color-scheme="dark"] .boke-social-icons a {
-  background: rgba(37, 99, 235, 0.12);
-}
-
-html[data-user-color-scheme="dark"] .boke-reading-progress {
-  left: 0;
-}
-
-html[data-user-color-scheme="dark"] .boke-back-to-top {
-  background: var(--boke-dark-board);
-  border-color: rgba(255, 255, 255, 0.12);
-  color: rgba(245, 247, 250, 0.6);
-}
-
-html[data-user-color-scheme="dark"] .boke-back-to-top:hover {
-  background: var(--boke-primary);
-  color: #fff;
-}
-
-/* ============================================
-   Responsive
-   ============================================ */
-@media (max-width: 1023px) {
-  #navbar {
-    position: relative;
-    width: 100%;
-    min-height: auto;
-    padding: 0;
-  }
-
-  #navbar .navbar-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  #navbar .navbar-nav {
-    flex-direction: row;
-    flex-wrap: wrap;
-    padding: 0 12px;
-  }
-
-  #navbar .nav-link {
-    font-size: 13px;
-  }
-
-  #navbar .dropdown-menu {
-    position: absolute;
-    width: auto;
-    min-width: 160px;
-    background: var(--boke-sidebar-bg);
-    border-radius: var(--boke-radius);
-    box-shadow: var(--boke-shadow-hover);
-  }
-
-  #board {
-    margin-left: 0;
-  }
-
-  body.boke-home #banner {
-    margin-left: 0;
-  }
-
-  body.boke-home #banner .banner-text::before {
-    font-size: clamp(22px, 4.5vw, 32px);
-  }
-
-  .boke-reading-progress {
-    left: 0;
-  }
+/* 暮色底上不要给图片再压暗 */
+[data-user-color-scheme="dark"] img,
+:root img {
+  filter: none !important;
 }
 
 @media (max-width: 768px) {
-  #navbar {
-    position: relative;
+  body {
+    font-size: 16px;
   }
 
-  #navbar .navbar-nav {
-    flex-wrap: wrap;
-    gap: 2px;
+  body.boke-home #board,
+  .footer-inner,
+  body.boke-home #banner .banner-text,
+  body:not(.boke-home) .banner-text {
+    padding-left: 20px;
+    padding-right: 20px;
   }
 
-  #navbar .nav-link {
-    font-size: 12.5px;
-    padding: 6px 10px;
-  }
-
-  #board > .container {
-    padding: 16px 12px 32px;
-  }
-
-  .post-content {
-    padding-left: 0;
-    padding-right: 0;
-  }
-
-  .markdown-body {
-    font-size: 15px;
-  }
-
-  .boke-author-card,
-  .boke-like-card {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .boke-subscribe-form {
-    flex-direction: column;
-  }
-
-  .boke-columns {
+  /* 手机上邮戳挪到标题上方，信文占满整行 */
+  .index-info {
     grid-template-columns: 1fr;
+    row-gap: 14px;
+    padding: 28px 0;
   }
 
-  .boke-contact-button {
-    right: 10px;
-    bottom: 16px;
-    width: 38px;
-    height: 38px;
-    font-size: 12px;
-    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+  .index-info > .dl-stamp {
+    grid-row: auto;
   }
 
-  .boke-contact-panel {
-    right: 10px;
-    bottom: 62px;
-    width: min(280px, calc(100vw - 20px));
+  .index-info > .index-header,
+  .index-info > .index-excerpt,
+  .index-info > .index-btm {
+    grid-column: 1;
+  }
+
+  .dl-stamp {
+    width: 70px;
+    height: 70px;
+  }
+
+  .dl-cancel {
+    display: none;
+  }
+}
+@media (max-width: 768px) {
+  .index-header {
+    font-size: 22px;
+  }
+
+  .dl-letter--prose .index-header {
+    font-size: 24px;
+  }
+
+  .post-content,
+  .markdown-body {
+    max-width: none;
+  }
+
+  .boke-contact-button,
+  .boke-back-to-top {
+    right: 16px;
+  }
+
+  .boke-contact-button { bottom: 16px; }
+  .boke-back-to-top { bottom: 70px; }
+  .boke-contact-panel { right: 16px; bottom: 70px; }
+}
+
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  .dl-stamp,
+  .boke-contact-button,
+  .boke-back-to-top,
+  .boke-reading-progress {
+    display: none !important;
   }
 }
 
@@ -1083,8 +1286,9 @@ html[data-user-color-scheme="dark"] .boke-back-to-top:hover {
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
     scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
   }
 }

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>方案 B · 晚风信笺 — 晚风の技术笔记</title>
+<style>
+:root{
+  --night:#171E2B;       /* 夜蓝 */
+  --night-2:#1E2634;     /* 檐影 */
+  --line:#2C3746;
+  --lamp:#E9E3D5;        /* 灯下暖白 */
+  --lamp-soft:#AAB1BE;
+  --lamp-faint:#767F8F;
+  --grape:#9A79B0;       /* 葡萄紫 · 杂记 */
+  --moss:#8FAE83;        /* 苔绿 · 工具折腾 */
+  --well:#6E93A8;        /* 井水青 · 学习笔记 */
+  --kai:"KaiTi","STKaiti","Kaiti SC",serif;
+  --kai-mix:Constantia,"KaiTi","STKaiti","Kaiti SC",serif;
+  --fang:"FangSong","STFangsong",serif;
+  --serif:"Noto Serif SC","Source Han Serif SC",Constantia,SimSun,serif;
+  --data:Consolas,"Cascadia Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--night); color:var(--lamp);
+  font-family:var(--serif); font-weight:300;
+  font-size:17px; line-height:2.0;
+  background-image:radial-gradient(120% 60% at 22% 0%,rgba(154,121,176,.13),transparent 62%);
+  background-repeat:no-repeat;
+}
+.dl-wrap{max-width:900px; margin:0 auto; padding:0 28px}
+a{color:var(--lamp); text-decoration:none}
+a:focus-visible{outline:2px solid var(--grape); outline-offset:4px}
+.dl-label{font-family:var(--fang); font-size:13px; letter-spacing:.16em; color:var(--lamp-faint)}
+.dl-num{font-family:var(--data); font-size:12px; letter-spacing:.08em; color:var(--lamp-faint)}
+
+/* ── 顶栏 ───────────────────────────── */
+.dl-bar{border-bottom:1px solid var(--line)}
+.dl-bar .dl-wrap{display:flex; align-items:center; gap:26px; height:66px}
+.dl-mark{font-family:var(--kai); font-size:23px; letter-spacing:.16em}
+.dl-mark i{font-style:normal; font-family:var(--data); font-size:10.5px; letter-spacing:.2em; color:var(--lamp-faint); margin-left:12px; vertical-align:3px}
+.dl-nav{margin-left:auto; display:flex; gap:22px; font-family:var(--fang); font-size:15px; letter-spacing:.08em}
+.dl-nav a{color:var(--lamp-soft); padding-bottom:3px}
+.dl-nav a:hover{color:var(--lamp); box-shadow:inset 0 -1px 0 var(--grape)}
+/* ── 卷首 ───────────────────────────── */
+.dl-hero{padding:78px 0 64px}
+.dl-hero-name{font-family:var(--kai); font-size:clamp(52px,9vw,92px); line-height:1; letter-spacing:.13em; margin:0; color:var(--lamp)}
+.dl-hero-epi{
+  font-family:var(--kai); font-size:clamp(21px,2.8vw,29px); line-height:1.85;
+  margin:34px 0 0; max-width:21ch; color:var(--lamp);
+}
+.dl-hero-epi span{color:var(--grape)}
+.dl-hero-sub{margin:26px 0 0; max-width:34ch; color:var(--lamp-soft); font-size:16.5px; line-height:2.05}
+.dl-hero-meta{margin:34px 0 0; display:flex; flex-wrap:wrap; gap:8px 28px; border-top:1px solid var(--line); padding-top:14px}
+.dl-hero-meta span{font-family:var(--data); font-size:12.5px; color:var(--lamp-faint); letter-spacing:.06em}
+.dl-hero-meta span b{color:var(--lamp-soft); font-weight:400}
+
+/* ── 信件列表 ───────────────────────── */
+.dl-sec-h{
+  font-family:var(--fang); font-size:14px; letter-spacing:.4em; color:var(--lamp-faint);
+  margin:0 0 6px; display:flex; align-items:center; gap:18px;
+}
+.dl-sec-h::after{content:""; flex:1; height:1px; background:var(--line)}
+.dl-list{margin:0; padding:0; list-style:none}
+.dl-item{display:grid; grid-template-columns:96px 1fr; gap:26px; padding:34px 0; border-bottom:1px solid var(--line)}
+
+/* 邮戳：环上是分类，环心是日期，戳的墨色就是这封信的性质 */
+.dl-stamp{position:relative; width:82px; height:82px; flex:none}
+.dl-ring{
+  position:absolute; inset:9px; border-radius:50%;
+  border:1.5px solid currentColor; opacity:.62;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  transform:rotate(-7deg);
+}
+.dl-ring::before{content:""; position:absolute; inset:4px; border-radius:50%; border:1px solid currentColor; opacity:.42}
+.dl-ring b{font-family:var(--data); font-size:16px; font-weight:400; letter-spacing:.02em; line-height:1}
+.dl-ring i{font-style:normal; font-family:var(--data); font-size:8.5px; letter-spacing:.18em; margin-top:3px; opacity:.85}
+.dl-cancel{position:absolute; left:74px; top:26px; width:56px; opacity:.3}
+.dl-cancel span{display:block; height:1px; background:currentColor; margin-bottom:5px}
+.dl-cancel span:nth-child(2){width:82%}
+.dl-cancel span:nth-child(3){width:64%}
+.dl-stamp--well{color:var(--well)}
+.dl-stamp--moss{color:var(--moss)}
+.dl-stamp--grape{color:var(--grape)}
+
+.dl-body h3{font-family:var(--kai-mix); font-weight:400; font-size:26px; line-height:1.6; margin:0; letter-spacing:.01em}
+.dl-body h3 a:hover{box-shadow:inset 0 -1px 0 currentColor}
+.dl-kind{margin:11px 0 0; display:flex; flex-wrap:wrap; gap:6px 16px; align-items:baseline}
+.dl-kind em{font-style:normal; font-family:var(--fang); font-size:13.5px; letter-spacing:.1em}
+.dl-kind--well em{color:var(--well)} .dl-kind--moss em{color:var(--moss)} .dl-kind--grape em{color:var(--grape)}
+.dl-excerpt{margin:13px 0 0; color:var(--lamp-soft); font-size:16.5px; line-height:1.9; max-width:44ch}
+.dl-result{
+  margin:16px 0 0; display:inline-flex; flex-wrap:wrap; gap:6px 22px;
+  border-left:1px solid var(--line); padding:2px 0 2px 15px;
+}
+.dl-result span{font-family:var(--data); font-size:12.5px; color:var(--lamp-soft); letter-spacing:.03em}
+.dl-result span i{font-style:normal; color:var(--lamp-faint); margin-right:5px}
+.dl-item--prose h3{font-size:30px; letter-spacing:.06em}
+.dl-item--prose .dl-excerpt{color:var(--lamp); font-family:var(--kai); font-size:19px; line-height:2.1; max-width:38ch}
+
+/* ── 正文样张 ───────────────────────── */
+.dl-spec{margin-top:80px; border-top:1px solid var(--line); padding-top:44px}
+.dl-spec h1{font-family:var(--kai); font-weight:400; font-size:clamp(28px,4vw,40px); line-height:1.6; margin:16px 0 0; letter-spacing:.04em; max-width:22ch}
+.dl-spec-meta{margin:20px 0 40px; display:flex; gap:10px 24px; flex-wrap:wrap; border-bottom:1px solid var(--line); padding-bottom:16px}
+.dl-text{max-width:36em}
+.dl-text p{margin:0 0 1.3em}
+.dl-text h2{font-family:var(--kai); font-weight:400; font-size:23px; letter-spacing:.14em; margin:2.1em 0 .7em; color:var(--lamp)}
+.dl-text h2::before{content:"—— "; color:var(--grape)}
+.dl-quote{
+  margin:0 0 1.3em; padding:20px 24px; background:var(--night-2);
+  border-left:2px solid var(--grape); font-family:var(--kai); font-size:19px; line-height:2.05;
+}
+.dl-pre{background:#121825; border:1px solid var(--line); font-family:var(--data); font-size:13.5px; line-height:1.8; padding:16px 18px; overflow-x:auto; margin:0 0 1.3em; color:#CBD3DF}
+.dl-pre b{color:var(--moss); font-weight:400}
+.dl-formula{font-family:Cambria,Constantia,serif; font-style:italic; font-size:18px; color:var(--lamp)}
+
+/* ── 页脚 ───────────────────────────── */
+.dl-foot{margin-top:80px; border-top:1px solid var(--line)}
+.dl-foot .dl-wrap{padding-top:26px; padding-bottom:70px}
+.dl-foot p{margin:0; font-family:var(--fang); font-size:14px; letter-spacing:.1em; color:var(--lamp-faint)}
+.dl-foot p+p{margin-top:8px; font-family:var(--data); font-size:11.5px; letter-spacing:.06em}
+
+@media (max-width:680px){
+  .dl-nav{display:none}
+  .dl-item{grid-template-columns:1fr; gap:14px}
+  .dl-stamp{width:70px; height:70px}
+  .dl-cancel{display:none}
+  .dl-hero{padding:52px 0 44px}
+  .dl-body h3{font-size:22px}
+  .dl-item--prose h3{font-size:24px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
+</style>
+</head>
+<body>
+<header class="dl-bar">
+  <div class="dl-wrap">
+    <div class="dl-mark">晚风<i>zephyr</i></div>
+    <nav class="dl-nav"><a href="#">近信</a><a href="#">旧档</a><a href="#">项目</a><a href="#">命理</a><a href="#">关于</a></nav>
+  </div>
+</header>
+
+<main class="dl-wrap">
+  <section class="dl-hero">
+    <h1 class="dl-hero-name">晚 风</h1>
+    <p class="dl-hero-epi">人无法同时获得青春<br>和对<span>青春</span>的感受。</p>
+    <p class="dl-hero-sub">代码、论文，和一些不必要的散文，都收在这里。写给以后的自己看。</p>
+    <div class="dl-hero-meta">
+      <span><b>10</b> 封</span><span><b>2</b> 篇建模论文</span><span><b>2</b> 篇散文</span><span>自 <b>2026.05</b></span><span><b>824</b> 次到访</span>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="dl-sec-h">近 信</h2>
+    <ul class="dl-list">
+      <li class="dl-item">
+        <div class="dl-stamp dl-stamp--well">
+          <div class="dl-ring"><b>06·09</b><i>2026</i></div>
+          <div class="dl-cancel"><span></span><span></span><span></span></div>
+        </div>
+        <div class="dl-body">
+          <h3><a href="#">基于动力学约束与滑窗回归的磁浮列车悬浮电磁铁故障检测与识别</a></h3>
+          <p class="dl-kind dl-kind--well"><em>学习笔记 · 数维杯</em><span class="dl-num">11,240 字 / 39 节</span></p>
+          <p class="dl-excerpt">悬浮电磁铁的性能退化会引起电磁力失配、间隙波动和载荷分配异常，需要一个既讲得通物理、又拟合得住数据的模型。</p>
+          <p class="dl-result"><span><i>R²</i>0.75336</span><span><i>MAPE</i>4.369%</span><span><i>η</i>0.7120683</span><span><i>判定</i>整车功放衰减</span></p>
+        </div>
+      </li>
+      <li class="dl-item dl-item--prose">
+        <div class="dl-stamp dl-stamp--grape">
+          <div class="dl-ring"><b>05·30</b><i>2026</i></div>
+          <div class="dl-cancel"><span></span><span></span><span></span></div>
+        </div>
+        <div class="dl-body">
+          <h3><a href="#">老院的葡萄架</a></h3>
+          <p class="dl-kind dl-kind--grape"><em>杂记 · 散文</em><span class="dl-num">2,180 字</span></p>
+          <p class="dl-excerpt">我离开老院多年，最先想起的，却不是堂屋，也不是井台，是院角那一架葡萄。</p>
+        </div>
+      </li>
+      <li class="dl-item">
+        <div class="dl-stamp dl-stamp--moss">
+          <div class="dl-ring"><b>06·09</b><i>2026</i></div>
+          <div class="dl-cancel"><span></span><span></span><span></span></div>
+        </div>
+        <div class="dl-body">
+          <h3><a href="#">记一次 Codex Desktop 在 Windows 上的 Fast Mode 修复</a></h3>
+          <p class="dl-kind dl-kind--moss"><em>工具折腾 · Codex Desktop</em><span class="dl-num">os error 6000</span></p>
+          <p class="dl-excerpt">最烦的不是它直接报错，而是状态会来回变——像是刚修好，下一次打开又回到原点。</p>
+          <p class="dl-result"><span><i>结论</i>不要依赖 WindowsApps 目录</span><span><i>做法</i>迁到用户可写位置再加载</span></p>
+        </div>
+      </li>
+      <li class="dl-item">
+        <div class="dl-stamp dl-stamp--moss">
+          <div class="dl-ring"><b>06·12</b><i>2026</i></div>
+          <div class="dl-cancel"><span></span><span></span><span></span></div>
+        </div>
+        <div class="dl-body">
+          <h3><a href="#">我整理了一个 AI 建站工作流 Skill</a></h3>
+          <p class="dl-kind dl-kind--moss"><em>工具折腾 · AI 建站</em></p>
+          <p class="dl-excerpt">AI 写代码很快，但做出来的网站经常不够好看。问题多半不在前端能力，而在一上来就让它直接写代码。</p>
+        </div>
+      </li>
+      <li class="dl-item dl-item--prose">
+        <div class="dl-stamp dl-stamp--grape">
+          <div class="dl-ring"><b>06·12</b><i>2026</i></div>
+          <div class="dl-cancel"><span></span><span></span><span></span></div>
+        </div>
+        <div class="dl-body">
+          <h3><a href="#">第 001 章 · 没有邮票的来信</a></h3>
+          <p class="dl-kind dl-kind--grape"><em>杂记 · 同人练习</em><span class="dl-num">课堂作业</span></p>
+          <p class="dl-excerpt">墨多多发现那封信的时候，正趴在书桌前和作业本进行一场艰苦卓绝的战斗。</p>
+        </div>
+      </li>
+      <li class="dl-item">
+        <div class="dl-stamp dl-stamp--well">
+          <div class="dl-ring"><b>06·02</b><i>2026</i></div>
+          <div class="dl-cancel"><span></span><span></span><span></span></div>
+        </div>
+        <div class="dl-body">
+          <h3><a href="#">基于机理反演与滑动窗口岭回归的抱轨式磁浮列车悬浮电磁铁故障检测模型</a></h3>
+          <p class="dl-kind dl-kind--well"><em>学习笔记 · 数学建模</em></p>
+          <p class="dl-result"><span><i>R²</i>0.8788</span><span><i>MAPE</i>4.25%</span><span><i>误差&lt;10%</i>95.04%</span></p>
+        </div>
+      </li>
+    </ul>
+  </section>
+  <section class="dl-spec">
+    <p class="dl-label">正文样张 · 杂记</p>
+    <h1>老院的葡萄架</h1>
+    <div class="dl-spec-meta">
+      <span class="dl-num">2026.05.30</span><span class="dl-num">2,180 字</span><span class="dl-num">阅读约 7 分钟</span>
+    </div>
+    <div class="dl-text">
+      <p>我离开老院多年，最先想起的，却不是堂屋，也不是井台，是院角那一架葡萄。</p>
+      <p>那葡萄架搭在南墙下，四根木柱子，年岁久了，皮色发黑，摸上去有些涩。横梁是父亲从河边扛回来的柳木，粗细不一，歪歪地架着。春天一到，藤便从墙根醒过来，先是几粒嫩芽，像小孩子攥着的拳头，慢慢松开，露出淡黄的叶尖。</p>
+      <h2>夏</h2>
+      <p>到了夏天，葡萄架便成了院里最凉的地方。午后日头白得耀眼，瓦片上浮着热气，鸡也躲在柴堆后不叫了。只有架下有一片摇摇的阴影，碎碎地铺在地上。</p>
+      <blockquote class="dl-quote">叶子互相磨着，沙沙地响，响声很轻，像远处有人翻旧书。</blockquote>
+      <p>祖母常在架下择豆角，竹篮放在膝前，豆角一根根断开，落在篮里，声音清脆。她不大说话，只偶尔抬头看一眼藤上垂下来的须子。</p>
+      <h2>同一套排版里的技术正文</h2>
+      <p>同样的字号与行距，换成建模笔记时是这个样子——公式与代码不另开一种审美，只换墨色：</p>
+      <p class="dl-formula">F = 0.0977024 I<sup>1.97812</sup> z<sup>−1.96129</sup></p>
+      <pre class="dl-pre">&gt;&gt;&gt; eta, ci = fit_efficiency(gap, acc, F_ideal)
+eta = 0.7120683      ci = [0.7119548, 0.7121818]
+<b># eta &lt; 0.8 → 整车功放衰减故障</b></pre>
+    </div>
+  </section>
+</main>
+
+<footer class="dl-foot">
+  <div class="dl-wrap">
+    <p>晚风 · 写给以后的自己</p>
+    <p>zephyr ／ 2026 ／ github.com/WFCrush</p>
+  </div>
+</footer>
+</body>
+</html>

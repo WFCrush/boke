@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>晚风の技术笔记 · 改版方案三选</title>
+<style>
+:root{--bg:#FAFAF9;--ink:#26292B;--soft:#666C70;--faint:#9AA0A4;--line:#DFE1DE;
+--sans:"Noto Sans SC","Microsoft YaHei",sans-serif;--data:Consolas,ui-monospace,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.85}
+.w{max-width:760px;margin:0 auto;padding:56px 28px 80px}
+h1{font-size:26px;line-height:1.45;margin:0;letter-spacing:-.01em}
+.k{font-family:var(--data);font-size:11px;letter-spacing:.2em;color:var(--faint);text-transform:uppercase;margin:0 0 12px}
+.lede{color:var(--soft);margin:16px 0 0;max-width:44ch}
+h2{font-size:13px;letter-spacing:.28em;color:var(--soft);margin:52px 0 0;padding-bottom:8px;border-bottom:1px solid var(--ink)}
+ul{list-style:none;margin:0;padding:0}
+li{border-bottom:1px solid var(--line);padding:22px 0}
+li a{color:var(--ink);text-decoration:none;font-size:20px;font-weight:700;letter-spacing:-.005em}
+li a:hover{box-shadow:inset 0 -2px 0 var(--ink)}
+li a:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+li p{margin:7px 0 0;color:var(--soft);font-size:15.5px;max-width:52ch}
+li .m{font-family:var(--data);font-size:11.5px;color:var(--faint);letter-spacing:.05em;margin-top:9px;display:block}
+.diag{margin:0;padding:0;list-style:none}
+.diag li{border-bottom:1px dotted var(--line);padding:11px 0;display:grid;grid-template-columns:26px 1fr;gap:14px;font-size:15.5px}
+.diag li b{font-family:var(--data);font-size:12px;font-weight:400;color:var(--faint);padding-top:4px}
+.n{margin-top:44px;border-left:2px solid var(--ink);padding:4px 0 4px 16px;color:var(--soft);font-size:15px}
+@media (max-width:560px){.w{padding:36px 20px 60px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="w">
+  <p class="k">wfcrush.github.io / 改版方案 · 2026.08.20</p>
+  <h1>三个方向，都是同一个判断：<br>这本笔记本不该看起来像一个模板站。</h1>
+  <p class="lede">现在的问题不是"配色不好看"，而是一篇磁浮列车故障检测论文、一段 Codex 排错记录、和一篇写祖母葡萄架的散文，在页面上长得完全一样。下面三个方案各自选了一种把它们区分开的办法。</p>
+
+  <h2>方 案</h2>
+  <ul>
+    <li>
+      <a href="a-grid-notebook.html">A · 方格实验本</a>
+      <p>把网站做成一本真的方格本：所有东西对齐 5mm 格线，目录里直接印出每篇论文拟合到的公式和 R²，排错用红笔批注。散文是全站唯一被允许离开格线的内容——它落在一张撕边的白纸上。</p>
+      <span class="m">浅色 · 思源黑体 + 思源宋体 + Consolas · 描图纸青白 / 蓝黑墨水 / 批注红</span>
+    </li>
+    <li>
+      <a href="b-dusk-letter.html">B · 晚风信笺</a>
+      <p>按站名来：晚风、暮色、写给以后的自己。标题全部用楷体，每篇文章盖一枚邮戳，戳的墨色就是它的性质——井水青是论文，苔绿是折腾工具，葡萄紫是散文。</p>
+      <span class="m">深色 · 楷体 + 思源宋体 + 仿宋 · 夜蓝 / 葡萄紫 / 苔绿 / 井水青</span>
+    </li>
+    <li>
+      <a href="c-signal-monitor.html">C · 监测台</a>
+      <p>借你自己论文里的那套语言：五个分类是五个通道，首页就是一张输出时序图，技术笔记是基线信号，那两篇散文按"异常区间"用品红标出来。列表右侧直接给每篇的关键读数。</p>
+      <span class="m">浅色 · 等线 + 思源黑体 + Consolas · 台面白 / 信号青 / 异常品红</span>
+    </li>
+  </ul>
+
+  <h2>现 状 诊 断</h2>
+  <ul class="diag">
+    <li><b>01</b>首屏 48% 高度是一张被 0.55 蒙版压成灰雾的壁纸，打字机副标题是空的。</li>
+    <li><b>02</b>名字有五个：导航写"晚风の技术笔记"、首屏写"ASHUWEI 的技术笔记"、侧栏写"ASHUWEI"、副标题是"Fable"、首页配置里还有个"Aurora Notebook"。</li>
+    <li><b>03</b>文案是模板话："记录思考，分享生活，探索无限可能。"</li>
+    <li><b>04</b>配色是 Tailwind 默认的 slate + blue-600，和内容没有任何关系。</li>
+    <li><b>05</b>卡片没有日期、没有分类、没有字数，一屏只装两篇，其中大半是空白。</li>
+    <li><b>06</b>正文页目录挤成两行折行（"定位""展开"竖排），右下角两个悬浮按钮叠在一起。</li>
+    <li><b>07</b>磁浮那篇的近似式漏了一个 <code>$</code>，公式没渲染出来。</li>
+  </ul>
+
+  <p class="n">三份都是静态样张，只做了首页索引和一页正文的排版，用的是你博客里真实的标题、日期和数据。选定方向后再落到 Fluid 主题的 CSS 和模板上。</p>
+</div>
+</body>
+</html>

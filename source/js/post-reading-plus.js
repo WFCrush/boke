@@ -324,7 +324,7 @@
     value = String(value || '').trim();
     if (!value || value.length < 2) return false;
     if (/^(image|img|photo|screenshot|avatar)$/i.test(value)) return false;
-    if (/^ASHUWEI\s/.test(value)) return false;
+    if (/^(晚风|zephyr|ASHUWEI)\s/.test(value)) return false;
     if (/\.(png|jpe?g|gif|webp|svg)$/i.test(value)) return false;
     return true;
   }

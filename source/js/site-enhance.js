@@ -1,6 +1,6 @@
 (function () {
   var site = {
-    author: 'ASHUWEI',
+    author: '晚风',
     avatar: '/img/avatar.png',
     github: 'https://github.com/WFCrush',
     zhihu: 'https://www.zhihu.com',
@@ -32,7 +32,7 @@
       if (!img.hasAttribute('decoding')) img.setAttribute('decoding', 'async');
       if (!img.getAttribute('alt')) {
         var title = document.querySelector('#seo-header, .index-header, title');
-        img.setAttribute('alt', text(title) || 'ASHUWEI 的技术笔记配图');
+        img.setAttribute('alt', text(title) || '晚风の技术笔记配图');
       }
     });
   }
@@ -112,60 +112,25 @@
     document.head.appendChild(script);
   }
 
+  // 晚风信笺：首页是单栏信件列表，不再注入右侧边栏。
+  // 分类与标签走顶部导航和归档页，最新文章就是列表本身。
+  // 首页头图位置改成「卷首」：楷体署名 + 站点题记 + 那句自述。
   function buildHomeSidebar() {
     if (!isHomePage()) return;
     document.body.classList.add('boke-home');
-    var cards = Array.prototype.slice.call(document.querySelectorAll('.index-card'));
-    if (!cards.length || document.querySelector('.boke-home-layout')) return;
 
-    var parent = cards[0].parentElement;
-    var layout = document.createElement('div');
-    layout.className = 'boke-home-layout';
-    var posts = document.createElement('div');
-    posts.className = 'boke-home-posts';
-    var sidebar = document.createElement('aside');
-    sidebar.className = 'boke-home-sidebar';
-    sidebar.setAttribute('aria-label', '博客侧边栏');
+    var bannerText = document.querySelector('#banner .banner-text');
+    if (!bannerText || bannerText.querySelector('.dl-hero-name')) return;
 
-    parent.insertBefore(layout, cards[0]);
-    cards.forEach(function (card) {
-      posts.appendChild(card);
-    });
-    layout.appendChild(posts);
-    layout.appendChild(sidebar);
+    var desc = document.querySelector('meta[name="description"]');
+    var epigraph = desc ? desc.getAttribute('content') : '';
 
-    var categoryMap = {};
-    var tagMap = {};
-    cards.forEach(function (card) {
-      card.querySelectorAll('.post-meta a').forEach(function (link) {
-        var value = text(link).replace(/^#/, '');
-        var href = link.getAttribute('href') || '#';
-        if (!value) return;
-        if (href.indexOf('/tags/') !== -1 || text(link).indexOf('#') === 0) tagMap[value] = href;
-        else categoryMap[value] = href;
-      });
-    });
-
-    var hot = cards.slice(0, 5).map(function (card) {
-      var link = card.querySelector('.index-header a');
-      return link ? '<li><a href="' + link.href + '">' + text(link) + '</a></li>' : '';
-    }).join('');
-
-    function chips(map) {
-      var keys = Object.keys(map);
-      if (!keys.length) return '<p>发布文章后自动显示。</p>';
-      return '<ul class="boke-chip-list">' + keys.map(function (key) {
-        return '<li><a href="' + map[key] + '">' + key + '</a></li>';
-      }).join('') + '</ul>';
-    }
-
-    sidebar.innerHTML = [
-      '<section class="boke-sidebar-card"><div class="boke-profile"><img src="' + site.avatar + '" alt="ASHUWEI 头像"><div><h2>ASHUWEI</h2><p>记录编程实践、学习路径和技术成长。</p></div></div></section>',
-      '<section class="boke-sidebar-card"><h2>文章分类</h2>' + chips(categoryMap) + '</section>',
-      '<section class="boke-sidebar-card"><h2>标签</h2>' + chips(tagMap) + '</section>',
-      '<section class="boke-sidebar-card"><h2>最新文章</h2><ol class="boke-hot-list">' + hot + '</ol></section>',
-      '<section class="boke-sidebar-card"><h2>社交链接</h2><div class="boke-social-icons"><a href="' + site.github + '" target="_blank" rel="noopener" aria-label="GitHub">GitHub</a><a href="' + site.zhihu + '" target="_blank" rel="noopener" aria-label="知乎">知乎</a><a href="' + site.juejin + '" target="_blank" rel="noopener" aria-label="掘金">掘金</a></div></section>'
-    ].join('');
+    var head = document.createElement('div');
+    head.className = 'dl-hero-head';
+    head.innerHTML =
+      '<p class="dl-hero-name">晚 风</p>' +
+      (epigraph ? '<p class="dl-hero-epi">' + epigraph + '。</p>' : '');
+    bannerText.insertBefore(head, bannerText.firstChild);
   }
 
   function selectionShare() {
@@ -271,6 +236,50 @@
     });
   }
 
+  // 晚风信笺：给首页每封「信」盖一枚邮戳。
+  // 环心是日期，环下是年份，戳的墨色就是这封信的性质：
+  // 井水青 = 学习笔记（论文），苔绿 = 折腾工具，葡萄紫 = 杂记（散文与练习）。
+  var STAMP_INK = {
+    '学习笔记': 'well',
+    '博客搭建': 'moss',
+    '工具折腾': 'moss',
+    'gpt 破甲': 'moss',
+    '杂记': 'grape'
+  };
+
+  function buildLetterStamps() {
+    document.querySelectorAll('.index-info').forEach(function (item) {
+      if (item.querySelector('.dl-stamp')) return;
+
+      var time = item.querySelector('.post-meta time[datetime]');
+      var stampDate = '';
+      var stampYear = '';
+      if (time) {
+        var raw = (time.getAttribute('datetime') || text(time)).slice(0, 10).split('-');
+        if (raw.length >= 3) {
+          stampYear = raw[0];
+          stampDate = raw[1] + '·' + raw[2];
+        }
+      }
+      if (!stampDate) return;
+
+      var catLink = item.querySelector('.category-chain-item');
+      var category = catLink ? text(catLink) : '';
+      var ink = STAMP_INK[category] || 'moss';
+
+      item.classList.add('dl-letter');
+      if (ink === 'grape') item.classList.add('dl-letter--prose');
+
+      var stamp = document.createElement('div');
+      stamp.className = 'dl-stamp dl-stamp--' + ink;
+      stamp.setAttribute('aria-hidden', 'true');
+      stamp.innerHTML =
+        '<span class="dl-ring"><b>' + stampDate + '</b><i>' + stampYear + '</i></span>' +
+        '<span class="dl-cancel"><span></span><span></span><span></span></span>';
+      item.insertBefore(stamp, item.firstChild);
+    });
+  }
+
   ready(function () {
     enhanceImages();
     enhanceSearch();
@@ -278,6 +287,7 @@
     readingProgress();
     addSchema();
     buildHomeSidebar();
+    buildLetterStamps();
     backToTop();
     selectionShare();
     likeCard();

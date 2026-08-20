@@ -2,7 +2,7 @@
 title: Hexo Fluid 博客部署到 GitHub Pages 的完整记录
 date: 2026-05-25 20:00:00
 updated: 2026-05-26 12:20:00
-author: ASHUWEI
+author: 晚风
 categories:
   - 博客搭建
 tags:
