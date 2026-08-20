@@ -18,6 +18,12 @@ export default {
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: CORS });
     }
+    if (request.method === 'GET') {
+      return new Response('命理解读 API 运行中。请使用 POST 请求。', {
+        status: 200,
+        headers: { 'Content-Type': 'text/plain; charset=utf-8', ...CORS }
+      });
+    }
     if (request.method !== 'POST') {
       return new Response('Method Not Allowed', { status: 405 });
     }

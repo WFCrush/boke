@@ -1,4 +1,4 @@
 (function () {
-  window.BOKE_SKILL_CHAT_API_BASE = "";
-  window.BOKE_SKILL_CHAT_API_STYLE = "";
+  window.BOKE_SKILL_CHAT_API_BASE = "https://api.pie-xian.com";
+  window.BOKE_SKILL_CHAT_API_STYLE = "node";
 }());

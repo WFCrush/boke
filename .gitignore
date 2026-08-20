@@ -14,3 +14,7 @@ _multiconfig.yml
 .codex-tmp/
 skill-chat-sessions/
 source/api/public-skill-chat/config.local.php
+
+# Vercel
+vercel.json
+.vercel

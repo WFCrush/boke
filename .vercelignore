@@ -1,0 +1,16 @@
+node_modules
+.git
+public
+.deploy_git
+db.json
+*.log
+themes
+source
+scaffolds
+_config.yml
+_config.fluid.yml
+package.json
+package-lock.json
+admin
+tools
+scripts
