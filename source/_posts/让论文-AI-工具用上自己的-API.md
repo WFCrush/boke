@@ -1,7 +1,7 @@
 ---
 title: 让论文 AI 工具用上自己的 API：一次桌面软件逆向实战
 date: '2026-08-21 05:30:00'
-updated: '2026-08-20 23:01:16'
+updated: '2026-08-21 13:57:33'
 categories:
   - 工具折腾
 tags:
@@ -66,7 +66,7 @@ description: >-
 
 ## 四、那个让我加班的小 bug
 
-补丁打完后，填入 `futureppo.top` 的 key 和 `glm-5.2` 模型，点「测试连接」——
+补丁打完后，填入 `fff` 的 key 和 `glm-5.2` 模型，点「测试连接」——
 
 ```text
 连接失败: Unexpected token 'I', "Internal S"... is not valid JSON
