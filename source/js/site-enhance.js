@@ -230,7 +230,7 @@
       form.addEventListener('submit', function (event) {
         if (!site.subscribeAction) {
           event.preventDefault();
-          alert('请先在 source/js/site-enhance.js 中填写 Mailchimp 表单 action 地址。');
+          alert('订阅通道还没接好，暂时收不到邮件。可以先收藏本站或在 GitHub 上关注我。');
         }
       });
     });

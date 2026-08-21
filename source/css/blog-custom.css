@@ -62,8 +62,10 @@ body {
   padding-top: 0;
 }
 
-/* 全站共用同一条左侧基线：头图标题、信件列表、正文都从这里起排 */
-body:not(.boke-home) #board {
+/* 全站共用同一条左侧基线：头图标题、信件列表、正文都从这里起排。
+   文章页由 post.ejs 自己布局（.post-content），这里只管独立页面，
+   否则会把文章底部注入的卡片一起撑宽。 */
+body:not(.boke-home) #board:not(:has(.post-content)) {
   max-width: var(--dl-measure);
   margin: 0 auto;
   padding-left: 28px;
@@ -71,13 +73,22 @@ body:not(.boke-home) #board {
 }
 
 body:not(.boke-home) .post-content {
-  margin-left: 0;
-  margin-right: 0;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-/* 独立页面（关于 / 项目 / 命理）的 Bootstrap 栅格也回到这条基线 */
-body:not(.boke-home) #board .container,
-body:not(.boke-home) #board .row > [class^="col-"] {
+/* 文章底部注入的作者卡 / 订阅卡跟正文同宽，不许通栏 */
+.post-custom {
+  max-width: 40em;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 独立页面（关于 / 项目 / 命理）的 Bootstrap 栅格也回到这条基线。
+   用 :has(.page-content) 把范围锁在这些页面上 —— 文章页走的是 post.ejs
+   另一套结构，之前不加限定会把文章底部的卡片撑成通栏。 */
+body:not(.boke-home) #board:not(:has(.post-content)) .container,
+body:not(.boke-home) #board:not(:has(.post-content)) .row > [class^="col-"] {
   max-width: 100%;
   padding-left: 0;
   padding-right: 0;
@@ -85,7 +96,7 @@ body:not(.boke-home) #board .row > [class^="col-"] {
   margin-right: 0 !important;
 }
 
-body:not(.boke-home) #board .row {
+body:not(.boke-home) #board:not(:has(.post-content)) .row {
   margin-left: 0;
   margin-right: 0;
 }
@@ -100,6 +111,17 @@ body:not(.boke-home) #board .row {
 ::selection {
   background: rgba(154, 121, 176, .32);
   color: var(--dl-lamp);
+}
+
+/* 兜底：任何图片都不许撑破容器。
+   文章页底部那张作者头像是 2730×1535 的原图，带着 width/height 属性，
+   以前会把整块卡片顶出容器；下面的 96px 圆像规则用 !important 覆盖这条。 */
+img,
+picture,
+video,
+iframe {
+  max-width: 100%;
+  height: auto;
 }
 /* ============================================
    顶栏
@@ -896,7 +918,7 @@ body.boke-home #board {
 /* ============================================
    页脚
    ============================================ */
-.footer {
+footer {
   background: transparent;
   border-top: 1px solid var(--dl-line);
   margin-top: 80px;
@@ -930,6 +952,24 @@ body.boke-home #board {
 
 .footer-content .iconfont {
   display: none;
+}
+
+/* 访问统计跟着页脚一起左对齐、同一种字体和颜色，
+   不再是居中的一行橙黄数字 */
+footer .statistics {
+  text-align: left;
+  margin-top: 6px;
+  font-family: var(--dl-data);
+  font-size: 11.5px;
+  letter-spacing: .06em;
+  color: var(--dl-lamp-faint);
+}
+
+footer .statistics span,
+footer .statistics #busuanzi_value_site_pv,
+footer .statistics #busuanzi_value_site_uv {
+  color: var(--dl-lamp-faint);
+  font-family: var(--dl-data);
 }
 
 /* ============================================
@@ -1004,12 +1044,80 @@ body.boke-home #board {
   color: var(--dl-lamp);
   border-color: var(--dl-grape);
 }
+
+/* 文章页底部的作者卡与订阅卡 */
+.boke-author-card p,
+.boke-subscribe-card p,
+.boke-like-card p {
+  margin: 0 0 10px;
+  color: var(--dl-lamp-soft);
+  font-size: 15.5px;
+  line-height: 1.9;
+}
+
+.boke-author-card p:last-child,
+.boke-subscribe-card p:last-child {
+  margin-bottom: 0;
+}
+
+.boke-author-card a,
+.boke-subscribe-card a {
+  color: var(--dl-grape);
+}
+
+/* 订阅表单：输入框以前没上暗色样式，在暮色底上是一块白板 */
+.boke-subscribe-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.boke-subscribe-form input {
+  flex: 1 1 200px;
+  min-width: 0;
+  background: var(--dl-night-3);
+  border: 1px solid var(--dl-line);
+  border-radius: 0;
+  color: var(--dl-lamp);
+  font-family: var(--dl-serif);
+  font-size: 15px;
+  padding: 6px 12px;
+}
+
+.boke-subscribe-form input::placeholder {
+  color: var(--dl-lamp-faint);
+}
+
+.boke-subscribe-form input:focus {
+  outline: none;
+  border-color: var(--dl-grape);
+}
+
+.boke-subscribe-form button {
+  flex: 0 0 auto;
+}
 .boke-share-pop {
+  position: absolute;
+  z-index: 1050;
   background: var(--dl-night-2);
   border: 1px solid var(--dl-line);
   border-radius: 0;
   box-shadow: 0 10px 26px -14px rgba(0, 0, 0, .7);
   padding: 7px;
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .15s ease;
+}
+
+/* 划词分享条只在选中文字时出现；之前漏了这条，它一直摊在页面底部 */
+.boke-share-pop.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
 
 /* 两枚悬浮按钮曾经叠在一起：联系在下，回顶在上，各自留出间距 */
@@ -1190,6 +1298,86 @@ body.boke-home #board {
 }
 
 /* ============================================
+   表单控件（订阅框、命理页、搜索框）
+   浏览器默认样式在暮色底上是一块白板，手机端更明显
+   ============================================ */
+input[type="text"],
+input[type="email"],
+input[type="number"],
+input[type="search"],
+input[type="password"],
+select,
+textarea {
+  background: var(--dl-night-3);
+  border: 1px solid var(--dl-line);
+  border-radius: 0;
+  color: var(--dl-lamp);
+  font-family: var(--dl-serif);
+  font-size: 15px;
+  padding: 6px 12px;
+  max-width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+select {
+  /* 收起原生下拉箭头后自己画一个，避免 iOS 上出现系统圆角 */
+  background-image: linear-gradient(45deg, transparent 50%, var(--dl-lamp-faint) 50%),
+                    linear-gradient(135deg, var(--dl-lamp-faint) 50%, transparent 50%);
+  background-position: calc(100% - 15px) center, calc(100% - 10px) center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 30px;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--dl-lamp-faint);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--dl-grape);
+}
+
+/* 文章底部的版权盒：Fluid 把那枚大水印图标绝对定位在右侧，
+   窄屏上会顶出容器，直接隐藏；文字信息本身保留。 */
+.license-box {
+  background: var(--dl-night-2);
+  border: 1px solid var(--dl-line);
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.license-box .license-icon {
+  display: none;
+}
+
+.license-box .license-title > div:first-child {
+  font-family: var(--dl-kai-mix);
+  font-size: 18px;
+  color: var(--dl-lamp);
+}
+
+.license-box .license-title > div:last-child,
+.license-box .license-meta {
+  font-family: var(--dl-data);
+  font-size: 11.5px;
+  letter-spacing: .04em;
+  color: var(--dl-lamp-faint);
+  word-break: break-all;
+}
+
+/* Bootstrap 是从 cdn.jsdelivr.net 加载的，国内经常慢或直接失败。
+   一旦它没到位，隐藏弹窗的规则就不存在，搜索框会整块摊在页面底部。
+   这里用本地样式兜住；Bootstrap 打开弹窗时写的是行内 display:block，不受影响。 */
+.modal {
+  display: none;
+}
+
+/* ============================================
    可访问性与降级
    ============================================ */
 a:focus-visible,
@@ -1266,6 +1454,29 @@ button:focus-visible,
   .boke-contact-button { bottom: 16px; }
   .boke-back-to-top { bottom: 70px; }
   .boke-contact-panel { right: 16px; bottom: 70px; }
+
+  /* 文章底部注入的卡片跟正文同一条内缩，两边留白对称 */
+  .post-custom,
+  .boke-author-card,
+  .boke-subscribe-card,
+  .boke-like-card {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .boke-author-card,
+  .boke-subscribe-card,
+  .boke-like-card {
+    padding: 16px;
+  }
+
+  .boke-subscribe-form input {
+    flex: 1 1 100%;
+  }
+
+  .boke-subscribe-form button {
+    width: 100%;
+  }
 }
 
 @media print {
