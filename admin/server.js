@@ -1090,6 +1090,63 @@ async function publicSiteContains(text, siteUrl) {
   return html.includes(text);
 }
 
+// Fluid 会在正文顶部渲染「本文最后更新于 YYYY-MM-DD HH:mm」，
+// 后台每次保存都会刷新 front-matter 的 updated，所以这个时间戳
+// 是判断「公开站点上的这篇文章到底是不是刚改的那一版」最可靠的指纹。
+function extractUpdatedStamp(html) {
+  const match = String(html).match(/id="updated-time"[\s\S]{0,400}?(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2})/);
+  return match ? match[1] : '';
+}
+
+// source/_posts/xxx.md → public/<分类>/xxx/index.html
+async function findBuiltPage(slug) {
+  const stack = [publishDir];
+  while (stack.length) {
+    const dir = stack.pop();
+    let entries;
+    try {
+      entries = await fs.readdir(dir, { withFileTypes: true });
+    } catch (_) {
+      continue;
+    }
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      const full = path.join(dir, entry.name);
+      if (entry.name === slug) {
+        try {
+          await fs.access(path.join(full, 'index.html'));
+          return full;
+        } catch (_) { /* 同名目录但不是文章页，继续找 */ }
+      }
+      stack.push(full);
+    }
+  }
+  return '';
+}
+
+// 把这次发布真正改动的文章，换算成「该去公开站点上核对哪个网址、核对什么指纹」
+async function buildPublishExpectations(changedPostFiles, siteUrl) {
+  if (!siteUrl || !changedPostFiles.length) return [];
+  const base = siteUrl.endsWith('/') ? siteUrl : `${siteUrl}/`;
+  const expectations = [];
+  for (const file of changedPostFiles) {
+    const slug = path.basename(file, path.extname(file));
+    const builtDir = await findBuiltPage(slug);
+    if (!builtDir) continue;
+    let localHtml = '';
+    try {
+      localHtml = await fs.readFile(path.join(builtDir, 'index.html'), 'utf8');
+    } catch (_) {
+      continue;
+    }
+    const stamp = extractUpdatedStamp(localHtml);
+    if (!stamp) continue;
+    const relative = path.relative(publishDir, builtDir).split(path.sep).map(encodeURIComponent).join('/');
+    expectations.push({ slug, stamp, url: `${base}${relative}/` });
+  }
+  return expectations;
+}
+
 async function waitForDeployment(job, expectedSha, context) {
   const publishContext = context || await collectPublishStatus({ includeRun: false });
   addLog(job, '正在监测 GitHub Pages 自动部署...');
@@ -1121,6 +1178,31 @@ async function waitForDeployment(job, expectedSha, context) {
     addLog(job, '没有识别到 GitHub origin 仓库，跳过 Actions 状态监测。');
   }
 
+  const expectations = Array.isArray(job.publishExpectations) ? job.publishExpectations : [];
+  if (expectations.length) {
+    addLog(job, `正在核对公开站点上这 ${expectations.length} 篇文章是不是刚改的那一版...`);
+    for (let i = 0; i < 24; i += 1) {
+      const pending = [];
+      for (const item of expectations) {
+        let live = '';
+        try {
+          const joiner = item.url.includes('?') ? '&' : '?';
+          const res = await fetch(`${item.url}${joiner}v=${Date.now()}`, { cache: 'no-store' });
+          if (res.ok) live = await res.text();
+        } catch (_) { /* 网络抖动，下一轮再试 */ }
+        if (extractUpdatedStamp(live) !== item.stamp) pending.push(item);
+      }
+      if (!pending.length) {
+        job.siteOk = true;
+        addLog(job, `公开站点已经是最新内容：${publishContext.siteUrl}`);
+        return;
+      }
+      addLog(job, `还有 ${pending.length} 篇没刷新（${pending.map((p) => p.slug).join('、')}），继续等待...`);
+      await wait(5000);
+    }
+    throw new Error('已经执行 hexo deploy，但公开站点上的文章内容仍未更新，可能是 GitHub Pages 缓存或部署仓库推送失败');
+  }
+
   const expectedTitle = await latestPostExpectation();
   addLog(job, expectedTitle ? `正在检测公开博客是否出现文章：${expectedTitle}` : '正在检测公开博客是否可访问...');
   for (let i = 0; i < 18; i += 1) {
@@ -1146,12 +1228,20 @@ async function runPublishJob(job) {
     await runStreaming(job, 'git', ['config', 'http.postBuffer', '524288000']);
     await runStreaming(job, 'git', ['config', 'http.lowSpeedLimit', '0']);
     await runStreaming(job, 'git', ['config', 'http.lowSpeedTime', '999999']);
-    await runStreaming(job, 'git', ['add', '.']);
-    const status = await runStreaming(job, 'git', ['status', '--porcelain']);
+
+    // 只提交后台能改到的内容目录。以前是 git add .，会把工作区里
+    // 任何东西（包括含密钥的临时脚本）一起推到公开仓库。
+    const contentPaths = ['source', '_config.yml', '_config.fluid.yml'];
+    await runStreaming(job, 'git', ['add', '--', ...contentPaths]);
+    const stagedList = await gitOutput(['diff', '--cached', '--name-only']);
+    const stagedFiles = stagedList ? stagedList.split(/\r?\n/).filter(Boolean) : [];
+    const changedPostFiles = stagedFiles.filter((file) => file.startsWith('source/_posts/'));
+
     let shouldPush = false;
-    if (!status.output.trim()) {
+    if (!stagedFiles.length) {
       addLog(job, '没有新的本地改动需要提交。');
     } else {
+      addLog(job, `本次提交 ${stagedFiles.length} 个文件，其中文章 ${changedPostFiles.length} 篇。`);
       const message = `update blog ${new Date().toLocaleString('zh-CN', { hour12: false })}`;
       const commit = await runStreaming(job, 'git', ['commit', '-m', message]);
       if (!commit.ok) throw new Error('提交失败');
@@ -1169,6 +1259,20 @@ async function runPublishJob(job) {
       }
       if (!push.ok) throw new Error('推送到 GitHub 失败，请确认 Clash Verge 已开启，或稍后重试');
     }
+
+    // 关键一步：上面只是把源码推到 boke 仓库，公开站点 wfcrush.github.io
+    // 是另一个仓库，必须靠 hexo deploy 把 public/ 推上去才会变。
+    // 以前这里没有这一步，所以后台一直显示发布成功、线上却是旧内容。
+    addLog(job, '正在把构建结果推送到公开站点仓库（hexo deploy）...');
+    let deploy = await runStreaming(job, npmCommand, ['run', 'deploy']);
+    if (!deploy.ok) {
+      addLog(job, 'hexo deploy 失败，10 秒后自动重试一次...');
+      await wait(10000);
+      deploy = await runStreaming(job, npmCommand, ['run', 'deploy']);
+    }
+    if (!deploy.ok) throw new Error('hexo deploy 失败，公开站点没有更新（请确认代理可用）');
+
+    job.publishExpectations = await buildPublishExpectations(changedPostFiles, publishContext.siteUrl);
 
     const head = await runStreaming(job, 'git', ['rev-parse', 'HEAD']);
     const expectedSha = head.output.trim().split(/\r?\n/).pop();
