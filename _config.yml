@@ -30,6 +30,8 @@ category_dir: categories
 code_dir: downloads/code
 i18n_dir: :lang
 skip_render:
+  # 导航页是一份完整的独立 HTML，不要用主题模板去渲染它
+  - index.html
 
 # Writing
 new_post_name: :title.md # File name of new posts
@@ -61,7 +63,11 @@ prismjs:
 # per_page: Posts displayed per page. (0 = disable pagination)
 # order_by: Posts order. (Order by date descending by default)
 index_generator:
-  path: ''
+  # 博客首页生成到 home.html，把根路径 index.html 留给导航页
+  # （source/index.html，配合下面 skip_render 原样输出）。
+  # 原来导航页是手工放进部署仓库的，但 hexo deploy 是强制推送，
+  # 每次部署都会把它抹掉。放进源码才不会再丢。
+  path: 'home'
   per_page: 6
   order_by: -date
 

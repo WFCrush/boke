@@ -1092,9 +1092,7 @@ links:
   # 友链的成员项
   # Member item of page
   #
-  # 现在是空的：原来那三条是 Fluid 主题的示例数据（主题博客/文档/仓库），
-  # 不是真友链，先清掉。加友链照下面的格式往 items 里加就行：
-  #
+  # 加友链照这个格式往下加：
   #   - {
   #     title: "博客名",
   #     intro: "一句话简介",
@@ -1103,7 +1101,13 @@ links:
   #   }
   #
   # avatar 加载失败会自动换成 onerror_avatar。
-  items: []
+  items:
+    - {
+      title: "阿皮公益站",
+      intro: "收录还能白嫖的 AI 中转站，标了模型和注册门槛",
+      link: "https://wanfeng.888.moe",
+      avatar: "/img/avatar.png"
+    }
 
   # 当成员头像加载失败时，替换为指定图片
   # When the member avatar fails to load, replace the specified image

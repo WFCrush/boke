@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>晚风 · 导航</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  @font-face{font-family:'LXGWSeal';src:url('https://cdn.jsdelivr.net/gh/lxgw/LxgwSeal@main/TTF/LXGWSeal-Regular.ttf') format('truetype');font-display:block}
+  :root{--sky-0:#080a14;--sky-1:#101423;--sky-2:#1c2238;--ink:#d4dcf0;--ink-dim:#7a82a0;--ink-faint:#404868;--seal:#c43830;--seal-glow:rgba(196,56,48,.45);--celadon:#5e8a82;--celadon-glow:rgba(94,138,130,.35)}
+  html,body{height:100%}
+  body{background:var(--sky-0);font-family:'Songti SC','STSong','SimSun',serif;color:var(--ink);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+  .sky{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 70% 55% at 50% 25%,var(--sky-2),transparent),radial-gradient(ellipse 50% 40% at 20% 80%,rgba(94,138,130,.06),transparent),radial-gradient(ellipse 50% 40% at 85% 75%,rgba(196,56,48,.04),transparent),linear-gradient(180deg,var(--sky-0),var(--sky-1))}
+  .peaks{position:fixed;left:0;right:0;bottom:0;z-index:2;width:100%;height:48vh;min-height:240px;pointer-events:none}
+  .peaks svg{width:100%;height:100%;display:block}
+  .mist{position:fixed;left:-25%;width:150%;border-radius:50%;filter:blur(75px);z-index:3;pointer-events:none}
+  .mist-a{height:240px;background:rgba(94,138,130,.1);bottom:16%;animation:dr-a 55s linear infinite}
+  .mist-b{height:200px;background:rgba(140,160,200,.08);bottom:6%;animation:dr-b 70s linear infinite}
+  .mist-c{height:280px;background:rgba(80,100,140,.06);bottom:26%;animation:dr-c 85s linear infinite}
+  @keyframes dr-a{from{transform:translateX(0)}to{transform:translateX(22%)}}
+  @keyframes dr-b{from{transform:translateX(12%)}to{transform:translateX(-18%)}}
+  @keyframes dr-c{from{transform:translateX(-8%)}to{transform:translateX(16%)}}
+  #rain{position:fixed;inset:0;z-index:4;pointer-events:none}
+  #particles{position:fixed;inset:0;z-index:5;pointer-events:none}
+  .halo{position:fixed;left:50%;top:42%;width:600px;height:600px;transform:translate(-50%,-50%);z-index:1;pointer-events:none;background:radial-gradient(circle,rgba(94,138,130,.05),transparent 60%);animation:haloP 6s ease-in-out infinite}
+  @keyframes haloP{0%,100%{opacity:.4;transform:translate(-50%,-50%) scale(1)}50%{opacity:.8;transform:translate(-50%,-50%) scale(1.12)}}
+  .stage{position:relative;z-index:10;text-align:center;padding:50px 24px 80px;max-width:560px;width:100%}
+  .title-wrap{margin-bottom:14px;position:relative;display:flex;justify-content:center;align-items:center}
+  .title-svg{width:min(380px,76vw);height:auto;overflow:visible}
+  .title-svg .zhuan{fill:var(--ink);filter:drop-shadow(0 0 22px rgba(180,195,230,.12))}
+  .seal{display:inline-flex;align-items:center;justify-content:center;width:44px;height:52px;margin:0 auto 28px;background:var(--seal);color:#f0ede6;font-size:15px;font-weight:600;line-height:1.1;writing-mode:vertical-rl;letter-spacing:3px;box-shadow:0 2px 18px var(--seal-glow);border-radius:2px;position:relative;opacity:.92}
+  .seal::before{content:'';position:absolute;inset:3px;border:1px solid rgba(240,237,230,.5);border-radius:1px}
+  .tagline{font-size:14px;color:var(--ink-dim);margin-bottom:48px;letter-spacing:4px;font-family:'KaiTi','STKaiti','Kaiti SC','楷体',serif}
+  .line{width:44px;height:1px;margin:0 auto 48px;position:relative;background:linear-gradient(90deg,transparent,rgba(200,208,232,.18),transparent)}
+  .line::before{content:'';position:absolute;left:50%;top:50%;width:5px;height:5px;border-radius:50%;background:var(--seal);transform:translate(-50%,-50%);opacity:.7;box-shadow:0 0 8px var(--seal-glow)}
+  .links{display:flex;flex-direction:column}
+  .card{display:flex;align-items:center;gap:20px;padding:24px 14px;text-decoration:none;color:var(--ink);position:relative;overflow:hidden;transition:padding-left .5s ease,background .5s ease}
+  .card::after{content:'';position:absolute;left:12%;right:12%;bottom:0;height:1px;background:linear-gradient(90deg,transparent,rgba(200,208,232,.07) 25%,rgba(200,208,232,.07) 75%,transparent);transition:background .5s ease}
+  .card::before{content:'';position:absolute;left:-40px;top:50%;width:0;height:320px;transform:translateY(-50%);background:radial-gradient(ellipse,rgba(94,138,130,.13),transparent 65%);border-radius:50%;transition:width .7s cubic-bezier(.4,0,.2,1)}
+  .card:hover{padding-left:30px;background:rgba(94,138,130,.04)}
+  .card:hover::before{width:480px}
+  .card:hover::after{background:linear-gradient(90deg,transparent,rgba(94,138,130,.2) 25%,rgba(94,138,130,.2) 75%,transparent)}
+  .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--ink-dim);opacity:.5;transition:all .5s ease}
+  .card:hover .dot{opacity:1;background:var(--celadon);box-shadow:0 0 14px var(--celadon-glow);transform:scale(1.4)}
+  .card-body{text-align:left;flex:1}
+  .card-title{font-size:20px;font-weight:500;letter-spacing:5px;margin-bottom:5px;color:var(--ink);transition:color .5s ease}
+  .card:hover .card-title{color:var(--celadon)}
+  .card-desc{font-size:13px;color:var(--ink-faint);letter-spacing:1.5px}
+  .colophon{position:fixed;left:26px;bottom:30px;z-index:10;writing-mode:vertical-rl;font-size:11px;color:rgba(106,114,144,.3);letter-spacing:6px;pointer-events:none}
+  footer{position:fixed;bottom:22px;left:0;right:0;z-index:10;text-align:center;font-size:11px;color:rgba(106,114,144,.3);letter-spacing:3px}
+  @media(max-width:560px){.title-svg{width:290px}.colophon{display:none}}
+  @media(prefers-reduced-motion:reduce){*{animation-duration:.01s!important}#rain,#particles{display:none}.mist{animation:none}.halo{animation:none}}
+</style>
+<body>
+<div class="sky"></div>
+<div class="halo"></div>
+<canvas id="rain"></canvas>
+<canvas id="particles"></canvas>
+<div class="peaks">
+<svg viewBox="0 0 1440 300" preserveAspectRatio="none" aria-hidden="true">
+<path d="M0,165 Q180,95 380,140 Q560,175 760,120 Q960,85 1160,130 Q1320,160 1440,105 L1440,300 L0,300Z" fill="rgba(40,50,70,.22)"/>
+<path d="M0,210 Q140,155 340,185 Q540,205 740,170 Q960,140 1180,175 Q1340,195 1440,160 L1440,300 L0,300Z" fill="rgba(28,36,52,.32)"/>
+<path d="M0,255 Q120,225 280,242 Q480,255 680,238 Q900,225 1120,240 Q1300,250 1440,228 L1440,300 L0,300Z" fill="rgba(16,22,34,.5)"/>
+</svg>
+</div>
+<div class="mist mist-a"></div>
+<div class="mist mist-b"></div>
+<div class="mist mist-c"></div>
+<main class="stage">
+<div class="title-wrap">
+<svg class="title-svg" viewBox="0 0 2000 1000" aria-label="晚风">
+<g class="zhuan">
+<g transform="translate(-140,80) scale(0.5)">
+<path d="M497 719Q299 719 254 654Q205 583 205 399V335Q208 98 265.5 45.5Q323 -7 504 -7Q707 -7 748 56Q796 129 797 242V419Q793 614 735.5 666.5Q678 719 497 719ZM857 362Q856 238 854 200Q849 121 828.5 62.0Q808 3 742.5 -33.0Q677 -69 509 -69Q335 -69 272 -35Q174 18 153 154Q144 212 144 363Q144 479 147 516Q152 591 176.5 649.0Q201 707 264.5 743.0Q328 779 492 779Q674 779 737 744Q827 693 848 557Q857 500 857 362ZM166 389Q510 386 831 396L828 337Q629 333 355 329Q297 328 167 328Z"/>
+</g>
+<g transform="translate(540,30)">
+<path d="M115 80Q175 35,300 35Q425 35,485 95Q495 108,488 118Q478 128,462 121Q390 88,300 88Q205 88,158 138Q148 150,138 148Q122 142,118 126Q113 102,115 80Z"/>
+<path d="M162 190Q295 178,432 192Q455 194,455 208Q453 222,430 220Q295 208,172 220Q150 222,148 208Q148 193,162 190Z"/>
+<path d="M292 202Q305 202,310 215Q318 320,316 485Q314 506,298 506Q282 504,282 482Q284 320,275 225Q275 205,292 202Z"/>
+<path d="M258 475Q274 475,282 495Q280 595,248 695Q222 785,195 845Q186 862,170 856Q155 848,164 830Q198 760,224 680Q250 590,250 502Q250 480,258 475Z"/>
+<path d="M325 475Q340 475,344 495Q346 595,372 695Q398 785,425 845Q433 862,418 862Q402 860,396 842Q372 778,350 685Q326 590,326 502Q326 480,325 475Z"/>
+</g>
+</g>
+<g class="zhuan" transform="translate(1010,90) scale(0.95)">
+<path d="M345 635Q323 635 304 633H296Q267 632 249 652Q241 660 244 667Q249 684 271 685Q291 685 324 686Q582 691 707 691Q720 691 736 677Q748 667 748 658Q748 639 710 639Q579 641 345 635ZM541 746Q423 746 311 740Q234 736 205 702Q170 664 170 591Q170 538 173 493Q186 340 128 202Q117 176 100 176Q71 176 71 207Q71 228 82 255Q120 349 116.0 436.0Q112 523 112 578Q112 726 207 776Q252 800 539 800Q641 800 716 795Q875 788 875 649Q875 535 739 536H737Q685 537 636 537Q476 537 346 527Q303 523 303 498Q303 482 349 482H350Q488 488 603 488Q706 488 793 482Q875 477 895 417Q924 331 924 229Q924 189 899 189Q863 189 863 230Q863 420 790 429Q725 436 592 436Q477 436 344 430H337Q243 430 243 497Q243 571 351 579Q467 587 606 587Q669 587 738 586H741Q816 586 816 649Q816 738 723 743Q629 746 541 746ZM505 -116Q332 -116 332 4Q332 64 391 103Q437 134 437 149Q437 167 418 167Q407 167 387 160Q345 145 316 145Q207 145 207 248Q207 356 361 356Q384 356 409 354Q458 349 458 380Q458 424 485 424Q519 424 519 391Q519 293 421 302Q396 305 376 305Q263 305 263 246Q263 198 319 198Q337 198 363.0 207.0Q389 216 419 217Q495 217 495 155Q495 118 432 68Q391 35 391 2Q391 -60 505 -60Q604 -60 608 2Q617 106 790 106Q808 106 814.5 95.5Q821 85 821 77Q821 53 775 53Q672 54 667 -3Q657 -116 505 -116ZM646 193Q741 193 741 250Q741 313 662 313Q619 313 555 301Q547 299 540 299Q513 299 513 324Q513 342 537 349Q601 364 657 364Q795 364 795 254Q795 153 684 145Q653 143 631 143Q560 143 560 175Q560 196 589 197Q619 193 646 193Z"/>
+</g>
+</svg>
+</div>
+<div class="seal">晚风</div>
+<p class="tagline">人无法同时获得青春和对青春的感受</p>
+<div class="line"></div>
+<nav class="links">
+<a class="card" href="/home/" target="_blank" rel="noopener">
+<span class="dot"></span>
+<div class="card-body"><div class="card-title">My Blog</div><div class="card-desc">博客主页 · 技术笔记</div></div>
+</a>
+<a class="card" href="https://github.com/WFCrush" target="_blank" rel="noopener">
+<span class="dot"></span>
+<div class="card-body"><div class="card-title">GitHub</div><div class="card-desc">代码仓库 · 开源项目</div></div>
+</a>
+<a class="card" href="https://qm.qq.com/q/ZYEJ9WZQgW" target="_blank" rel="noopener">
+<span class="dot"></span>
+<div class="card-body"><div class="card-title">AstrBot 共建群</div><div class="card-desc">QQ 群 · 开发与共建</div></div>
+</a>
+<a class="card" href="https://qm.qq.com/q/YodReS1DEu" target="_blank" rel="noopener">
+  <span class="dot"></span>
+  <div class="card-body"><div class="card-title">AstrBot 玩家群</div><div class="card-desc">QQ 群 · 玩家交流</div></div>
+</a>
+<a class="card" href="https://wf.5yu.org/" target="_blank" rel="noopener">
+<span class="dot"></span>
+<div class="card-body"><div class="card-title">友链</div><div class="card-desc">志同道合 · 互相串联</div></div>
+</a>
+</nav>
+</main>
+<div class="colophon">暮色烟雨</div>
+<footer>晚风の技术笔记</footer>
+<script>
+(function(){
+  var rm=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if(!rm){
+    var rc=document.getElementById('rain'),rctx=rc.getContext('2d'),rw,rh,rd=[];
+    function rR(){rw=rc.width=innerWidth;rh=rc.height=innerHeight;}
+    rR();addEventListener('resize',rR);
+    for(var i=0;i<90;i++){rd.push({x:Math.random()*rw,y:Math.random()*rh,len:Math.random()*14+10,sp:Math.random()*3+1.5,op:Math.random()*.07+.03});}
+    (function rD(){rctx.clearRect(0,0,rw,rh);for(var i=0;i<rd.length;i++){var d=rd[i];d.y+=d.sp;if(d.y>rh){d.y=-d.len;d.x=Math.random()*rw;}rctx.beginPath();rctx.moveTo(d.x,d.y);rctx.lineTo(d.x-1.5,d.y+d.len);rctx.strokeStyle='rgba(150,165,200,'+d.op+')';rctx.lineWidth=.6;rctx.stroke();}requestAnimationFrame(rD);})();
+  }
+  if(!rm){
+    var pc=document.getElementById('particles'),pctx=pc.getContext('2d'),pw,ph,pt=[];
+    function pR(){pw=pc.width=innerWidth;ph=pc.height=innerHeight;}
+    pR();addEventListener('resize',pR);
+    for(var i=0;i<40;i++){pt.push({x:Math.random()*pw,y:Math.random()*ph,vx:(Math.random()-.5)*.35,vy:(Math.random()-.5)*.35,r:Math.random()*2.5+1,op:Math.random()*.1+.03});}
+    var mx=-9999,my=-9999;addEventListener('mousemove',function(e){mx=e.clientX;my=e.clientY;});addEventListener('mouseleave',function(){mx=-9999;my=-9999;});
+    (function pD(){pctx.clearRect(0,0,pw,ph);for(var i=0;i<pt.length;i++){var p=pt[i];p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=pw;if(p.x>pw)p.x=0;if(p.y<0)p.y=ph;if(p.y>ph)p.y=0;var dx=p.x-mx,dy=p.y-my,dm=Math.sqrt(dx*dx+dy*dy);if(dm<140){p.x+=dx/dm*1.2;p.y+=dy/dm*1.2;}pctx.beginPath();pctx.arc(p.x,p.y,p.r,0,Math.PI*2);pctx.fillStyle='rgba(94,138,130,'+p.op+')';pctx.fill();for(var j=i+1;j<pt.length;j++){var q=pt[j],ddx=p.x-q.x,ddy=p.y-q.y,dd=Math.sqrt(ddx*ddx+ddy*ddy);if(dd<140){pctx.beginPath();pctx.moveTo(p.x,p.y);pctx.lineTo(q.x,q.y);pctx.strokeStyle='rgba(94,138,130,'+(0.06*(1-dd/140))+')';pctx.lineWidth=.4;pctx.stroke();}}}requestAnimationFrame(pD);})();
+  }
+})();
+</script>
+</body>
+</html>
