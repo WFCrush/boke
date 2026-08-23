@@ -1087,37 +1087,37 @@ links:
   banner_img: /img/default.png
   banner_img_height: 30
   banner_mask_alpha: 0
+  title: "友链"
+  subtitle: "同行的人，和能找到我的地方。"
   # 友链的成员项
   # Member item of page
-  items:
-    - {
-      title: "Fluid Blog",
-      intro: "主题博客",
-      link: "https://hexo.fluid-dev.com/",
-      avatar: "/img/favicon.png"
-    }
-    - {
-      title: "Fluid Docs",
-      intro: "主题使用指南",
-      link: "https://hexo.fluid-dev.com/docs/",
-      avatar: "/img/favicon.png"
-    }
-    - {
-      title: "Fluid Repo",
-      intro: "主题 GitHub 仓库",
-      link: "https://github.com/fluid-dev/hexo-theme-fluid",
-      avatar: "/img/favicon.png"
-    }
+  #
+  # 现在是空的：原来那三条是 Fluid 主题的示例数据（主题博客/文档/仓库），
+  # 不是真友链，先清掉。加友链照下面的格式往 items 里加就行：
+  #
+  #   - {
+  #     title: "博客名",
+  #     intro: "一句话简介",
+  #     link: "https://example.com",
+  #     avatar: "https://example.com/favicon.png"
+  #   }
+  #
+  # avatar 加载失败会自动换成 onerror_avatar。
+  items: []
 
   # 当成员头像加载失败时，替换为指定图片
   # When the member avatar fails to load, replace the specified image
   onerror_avatar: /img/avatar.png
 
-  # 友链下方自定义区域，支持 HTML，可插入例如申请友链的文字
+  # 友链下方自定义区域，支持 HTML
   # Custom content at the bottom of the links
+  #
+  # 这里放「交流群」，不混进上面的 items——items 是别人的博客（友链），
+  # 群是一个加群入口，语义不同。模板把 custom 渲染在友链卡片之后，
+  # 靠 blog-custom.css 里的 flex order 把它视觉提到前面，不改主题模板。
   custom:
-    enable: false
-    content: '<hr><p>在下方留言申请加入我的友链，按如下格式提供信息：</p><ul><li>博客名：Fluid</li><li>简介：Fluid 主题官方博客</li><li>链接：https://hexo.fluid-dev.com</li><li>图片：https://hexo.fluid-dev.com/img/favicon.png</li></ul>'
+    enable: true
+    content: '<section class="dl-group" aria-labelledby="dl-group-h"><p class="dl-group-eyebrow" id="dl-group-h">交流群</p><div class="dl-slip"><h3 class="dl-slip-name">Astrbot 玩家交流群</h3><p class="dl-slip-desc">聊 AI 机器人怎么搭、怎么接、怎么调。踩过的坑都在群里。</p><a class="dl-slip-go" href="https://qm.qq.com/q/YodReS1DEu" target="_blank" rel="noopener noreferrer">加入群聊<span class="dl-slip-arrow" aria-hidden="true">→</span></a><p class="dl-slip-foot">QQ 群 · 点开会跳到 QQ</p></div></section>'
 
   # 评论插件
   # Comment plugin
